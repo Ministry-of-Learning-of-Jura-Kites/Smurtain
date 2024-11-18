@@ -1,25 +1,22 @@
 #include <ArduinoMqttClient.h>
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include "RequestType.cpp"
 #include <SoftwareSerial.h>
 
 #define WIFI_SSID "ggwp"
 #define WIFI_PASS "ggnaja123"
-#define BROKER_HOST ""
+#define BROKER_HOST "192.168.194.126"
 #define BROKER_PORT 1883
 #define REQUEST_TOPIC "request"
 #define BROKER_INTERVAL 5 // ms
-#define TX_PIN 16
-#define RX_PIN 19
+#define TX_PIN D0
+#define RX_PIN D1
 
 EspSoftwareSerial::UART sensorSerial;
 
 WiFiClient wifiClient;
 
 MqttClient mqttClient(wifiClient);
-
-// auto sensorSerial = SoftwareSerial::UA
 
 ulong previousMillis = millis();
 
@@ -32,77 +29,82 @@ void setup()
   while (!Serial)
     ;
 
-  sensorSerial.begin(115200, EspSoftwareSerial::SWSERIAL_7O1, RX_PIN, TX_PIN);
+  sensorSerial.begin(9600, EspSoftwareSerial::SWSERIAL_8O1, RX_PIN, TX_PIN);
 
   while (!sensorSerial)
-    ;
+  {
+    Serial.println("error");
+  }
 
-  // while (WiFi.begin(WIFI_SSID, WIFI_PASS) != WL_CONNECTED)
-  // {
+  Serial.println("started");
 
-  //   Serial.print(".");
+  wl_status_t status = WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    status = WiFi.begin(WIFI_SSID, WIFI_PASS);
+    Serial.print(status);
+    delay(1000);
+  }
 
-  //   delay(5000);
-  // }
+  Serial.println("\nWifi is Connected.");
 
-  // Serial.println("\nWifi is Connected.");
+  if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
+  {
+    Serial.print("MQTT connection failed! Error code = ");
 
-  // if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
-  // {
+    Serial.println(mqttClient.connectError());
 
-  //   Serial.print("MQTT connection failed! Error code = ");
+    while (1)
+      ;
+  }
 
-  //   Serial.println(mqttClient.connectError());
+  Serial.println("MQTT broker is connected.");
 
-  //   while (1)
-  //     ;
-  // }
+  mqttClient.onMessage(onMqttMessage);
 
-  // Serial.println("MQTT broker is connected.");
-
-  // mqttClient.onMessage(onMqttMessage);
-
-  // mqttClient.subscribe(REQUEST_TOPIC);
+  mqttClient.subscribe(REQUEST_TOPIC);
 }
 
 void loop()
 {
-  // mqttClient.poll();
+  mqttClient.poll();
+
   while (sensorSerial.available())
   {
     Serial.print((char)sensorSerial.read());
   }
 }
 
-// void onMqttMessage(int messageSize)
-// {
-//   String topic = mqttClient.messageTopic();
-//   String message;
-//   while (mqttClient.available())
-//   {
-//     message += mqttClient.readString();
-//   }
+void onMqttMessage(int messageSize)
+{
+  String topic = mqttClient.messageTopic();
+  String message;
+  while (mqttClient.available())
+  {
+    message += mqttClient.readString();
+  }
 
-//   if (topic == REQUEST_TOPIC)
-//   {
-//     // switch (resolveRequestType(message))
-//     // {
-//     // case Temperature:
-//     // {
-//     //   respondTemp();
-//     // }
-//     // case Humidity:
-//     // {
-//     //   respondHumidity();
-//     // }
-//     // case On:
-//     // {
-//     //   turnOn();
-//     // }
-//     // case Off:
-//     // {
-//     //   turnOff();
-//     // }
-//     // }
-//   }
-// }
+  if (topic == REQUEST_TOPIC)
+  {
+    // switch (resolveRequestType(message))
+    // {
+    // case Temperature:
+    // {
+    //   respondTemp();
+    // }
+    // case Humidity:
+    // {
+    //   respondHumidity();
+    // }
+    // case On:
+    // {
+    //   turnOn();
+    // }
+    // case Off:
+    // {
+    //   turnOff();
+    // }
+    // }
+  }
+}

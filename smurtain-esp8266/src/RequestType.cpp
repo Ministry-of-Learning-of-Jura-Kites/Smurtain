@@ -2,11 +2,11 @@
 
 enum RequestType
 {
+  None,
   Temperature,
   Humidity,
   On,
   Off,
-
 };
 
 RequestType resolveRequestType(String input)
@@ -27,4 +27,5 @@ RequestType resolveRequestType(String input)
   {
     return Off;
   }
+  return None;
 }
