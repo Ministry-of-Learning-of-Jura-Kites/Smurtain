@@ -2,15 +2,18 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
+#include "../../shared/RequestType.h"
 
 #define WIFI_SSID "ggwp"
 #define WIFI_PASS "ggnaja123"
-#define BROKER_HOST "192.168.194.126"
+#define BROKER_HOST "laptop.local"
 #define BROKER_PORT 1883
 #define REQUEST_TOPIC "request"
 #define BROKER_INTERVAL 5 // ms
 #define TX_PIN D0
 #define RX_PIN D1
+
+boolean has_encountered_error = false;
 
 EspSoftwareSerial::UART sensorSerial;
 
@@ -29,25 +32,32 @@ void setup()
   while (!Serial)
     ;
 
+  Serial.println("Serial connected");
+
   sensorSerial.begin(9600, EspSoftwareSerial::SWSERIAL_8O1, RX_PIN, TX_PIN);
 
   while (!sensorSerial)
-  {
-    Serial.println("error");
-  }
+    ;
 
-  Serial.println("started");
+  Serial.println("Sensor connected");
 
-  wl_status_t status = WiFi.begin(WIFI_SSID, WIFI_PASS);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
-    status = WiFi.begin(WIFI_SSID, WIFI_PASS);
-    Serial.print(status);
     delay(1000);
   }
 
-  Serial.println("\nWifi is Connected.");
+  Serial.println("\nWifi connected.");
+
+  // IPAddress serverIP;
+  // if (!WiFi.hostByName("laptop.local", serverIP))
+  // {
+  //   Serial.println("Failed to resolve laptop.local");
+  //   while (1)
+  //     ;
+  // }
 
   if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
   {
@@ -55,8 +65,9 @@ void setup()
 
     Serial.println(mqttClient.connectError());
 
-    while (1)
-      ;
+    has_encountered_error = true;
+
+    return;
   }
 
   Serial.println("MQTT broker is connected.");
@@ -68,12 +79,16 @@ void setup()
 
 void loop()
 {
+  if (has_encountered_error)
+  {
+    return;
+  }
   mqttClient.poll();
 
-  while (sensorSerial.available())
-  {
-    Serial.print((char)sensorSerial.read());
-  }
+  // while (sensorSerial.available())
+  // {
+  //   Serial.print((char)sensorSerial.read());
+  // }
 }
 
 void onMqttMessage(int messageSize)
@@ -85,26 +100,14 @@ void onMqttMessage(int messageSize)
     message += mqttClient.readString();
   }
 
+  Serial.println("received message");
+
   if (topic == REQUEST_TOPIC)
   {
-    // switch (resolveRequestType(message))
-    // {
-    // case Temperature:
-    // {
-    //   respondTemp();
-    // }
-    // case Humidity:
-    // {
-    //   respondHumidity();
-    // }
-    // case On:
-    // {
-    //   turnOn();
-    // }
-    // case Off:
-    // {
-    //   turnOff();
-    // }
-    // }
+    RequestType requestType = resolveRequestType(message);
+    if (requestType != RequestType::None)
+    {
+      sensorSerial.println(static_cast<int>(requestType));
+    }
   }
 }
