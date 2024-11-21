@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <SoftwareSerial.h>
 #include <string>
-#include "../../shared/RequestType.h"
+#include "RequestType.h"
 #include <DHTesp.h>
 
 #define LIGHT_PIN 34
@@ -20,6 +20,11 @@ EspSoftwareSerial::UART gatewaySerial;
 DHTesp dht;
 
 void handleRequest(RequestType requestType);
+
+std::array<unsigned char, 4> floatToUCharArray(float input);
+
+template <typename T>
+void printArray(Stream &Serial, T *array, size_t size);
 
 void setup()
 {
@@ -72,12 +77,36 @@ void handleRequest(RequestType requestType)
   case RequestType::Temperature:
   {
     dht.setup(DHT_PIN, DHT_TYPE);
-    Serial.println(String(static_cast<int>(requestType)) + String(dht.getTemperature()));
+    float value = dht.getTemperature();
+    auto ucharArray = floatToUCharArray(value);
+    Serial.print(static_cast<char>(requestType));
+    printArray<u_char>(Serial, ucharArray.begin(), 4);
+    Serial.println();
   }
   case RequestType::Humidity:
   {
     dht.setup(DHT_PIN, DHT_TYPE);
-    Serial.println(String(static_cast<int>(requestType)) + String(dht.getHumidity()));
+    float value = dht.getHumidity();
+    auto ucharArray = floatToUCharArray(value);
+    Serial.print(static_cast<char>(requestType));
+    printArray<u_char>(Serial, ucharArray.begin(), 4);
+    Serial.println();
   }
+  }
+}
+
+std::array<unsigned char, 4> floatToUCharArray(float input)
+{
+  std::array<unsigned char, 4> array = {0};
+  memcpy(array.begin(), &input, 4);
+  return array;
+}
+
+template <typename T>
+void printArray(Stream &Serial, T *array, size_t size)
+{
+  for (size_t i = 0; i < size; i++)
+  {
+    Serial.write(array[i]);
   }
 }
