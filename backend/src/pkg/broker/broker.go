@@ -1,4 +1,4 @@
-package mqtt
+package broker
 
 import (
 	"log"
@@ -11,7 +11,9 @@ import (
 var MqttServer *mqtt.Server
 
 func init() {
-	MqttServer = mqtt.New(nil)
+	MqttServer = mqtt.New(&mqtt.Options{
+		InlineClient: true,
+	})
 
 	_ = MqttServer.AddHook(new(auth.AllowHook), nil)
 

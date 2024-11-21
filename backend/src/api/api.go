@@ -6,5 +6,5 @@ import (
 )
 
 func CreateRoutes(group *echo.Group) {
-	group.GET("temperature", routes.GetTemperature)
+	group.GET("/temperature", routes.GetTemperature)
 }
