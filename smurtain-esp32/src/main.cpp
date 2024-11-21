@@ -45,12 +45,16 @@ void loop()
 {
   if (gatewaySerial.available())
   {
-    String messageChar = gatewaySerial.readString();
+    int data = gatewaySerial.read();
+    if(data==(int)'\n'){
+      return;
+    }
+    Serial.println("received message");
     try
     {
-      // use stoi for safety
-      int requestTypeInt = std::stoi(messageChar.c_str());
-      RequestType requestType = intToRequestType(requestType);
+      int requestTypeInt = data;
+      RequestType requestType = intToRequestType(requestTypeInt);
+      Serial.println("Survived");
       handleRequest(requestType);
     }
     catch (const std::invalid_argument &e)
@@ -79,18 +83,20 @@ void handleRequest(RequestType requestType)
     dht.setup(DHT_PIN, DHT_TYPE);
     float value = dht.getTemperature();
     auto ucharArray = floatToUCharArray(value);
-    Serial.print(static_cast<char>(requestType));
-    printArray<u_char>(Serial, ucharArray.begin(), 4);
-    Serial.println();
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
   }
   case RequestType::Humidity:
   {
     dht.setup(DHT_PIN, DHT_TYPE);
     float value = dht.getHumidity();
     auto ucharArray = floatToUCharArray(value);
-    Serial.print(static_cast<char>(requestType));
-    printArray<u_char>(Serial, ucharArray.begin(), 4);
-    Serial.println();
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
   }
   }
 }

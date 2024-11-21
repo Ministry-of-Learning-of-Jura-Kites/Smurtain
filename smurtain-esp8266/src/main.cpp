@@ -24,9 +24,7 @@ WiFiClient wifiClient;
 
 MqttClient mqttClient(wifiClient);
 
-ulong previousMillis = millis();
-
-u_char buffer[16];
+u_char buffer[5];
 
 void onMqttMessage(int messageSize);
 
@@ -55,14 +53,6 @@ void setup()
   }
 
   Serial.println("\nWifi connected.");
-
-  // IPAddress serverIP;
-  // if (!WiFi.hostByName("laptop.local", serverIP))
-  // {
-  //   Serial.println("Failed to resolve laptop.local");
-  //   while (1)
-  //     ;
-  // }
 
   if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
   {
@@ -93,6 +83,7 @@ void loop()
   if (sensorSerial.available())
   {
     sensorSerial.readBytesUntil('\n', buffer, 16);
+    Serial.println("received message from sensor");
     int requestTypeInt = (int)buffer[0];
     try
     {
@@ -104,10 +95,12 @@ void loop()
       case Temperature:
       {
         mqttClient.beginMessage(TEMP_TOPIC);
+        break;
       }
       case Humidity:
       {
         mqttClient.beginMessage(HUMIDITY_TOPIC);
+        break;
       }
       default:
       {
@@ -133,14 +126,16 @@ void onMqttMessage(int messageSize)
     message += mqttClient.readString();
   }
 
-  Serial.println("received message");
+  Serial.println("received message from Mqtt");
 
   if (topic == REQUEST_TOPIC)
   {
     RequestType requestType = resolveRequestType(message);
     if (requestType != RequestType::None)
     {
-      sensorSerial.println(static_cast<int>(requestType));
+      sensorSerial.write(static_cast<uint8_t>(requestType));
+      sensorSerial.write('\n');
+      sensorSerial.flush();
     }
   }
 }
