@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <SoftwareSerial.h>
 #include <string>
-#include "../../shared/RequestType.h"
+#include "RequestType.h"
 #include <DHTesp.h>
 
 #define LIGHT_PIN 34
@@ -20,6 +20,11 @@ EspSoftwareSerial::UART gatewaySerial;
 DHTesp dht;
 
 void handleRequest(RequestType requestType);
+
+std::array<unsigned char, 4> floatToUCharArray(float input);
+
+template <typename T>
+void printArray(Stream &Serial, T *array, size_t size);
 
 void setup()
 {
@@ -40,12 +45,16 @@ void loop()
 {
   if (gatewaySerial.available())
   {
-    String messageChar = gatewaySerial.readString();
+    int data = gatewaySerial.read();
+    if(data==(int)'\n'){
+      return;
+    }
+    Serial.println("received message");
     try
     {
-      // use stoi for safety
-      int requestTypeInt = std::stoi(messageChar.c_str());
-      RequestType requestType = intToRequestType(requestType);
+      int requestTypeInt = data;
+      RequestType requestType = intToRequestType(requestTypeInt);
+      Serial.println("Survived");
       handleRequest(requestType);
     }
     catch (const std::invalid_argument &e)
@@ -72,12 +81,38 @@ void handleRequest(RequestType requestType)
   case RequestType::Temperature:
   {
     dht.setup(DHT_PIN, DHT_TYPE);
-    Serial.println(String(static_cast<int>(requestType)) + String(dht.getTemperature()));
+    float value = dht.getTemperature();
+    auto ucharArray = floatToUCharArray(value);
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
   }
   case RequestType::Humidity:
   {
     dht.setup(DHT_PIN, DHT_TYPE);
-    Serial.println(String(static_cast<int>(requestType)) + String(dht.getHumidity()));
+    float value = dht.getHumidity();
+    auto ucharArray = floatToUCharArray(value);
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
   }
+  }
+}
+
+std::array<unsigned char, 4> floatToUCharArray(float input)
+{
+  std::array<unsigned char, 4> array = {0};
+  memcpy(array.begin(), &input, 4);
+  return array;
+}
+
+template <typename T>
+void printArray(Stream &Serial, T *array, size_t size)
+{
+  for (size_t i = 0; i < size; i++)
+  {
+    Serial.write(array[i]);
   }
 }

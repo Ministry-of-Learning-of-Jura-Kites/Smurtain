@@ -2,13 +2,16 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
-#include "../../shared/RequestType.h"
+#include "RequestType.h"
+#include <stdexcept>
 
 #define WIFI_SSID "ggwp"
 #define WIFI_PASS "ggnaja123"
 #define BROKER_HOST "laptop.local"
 #define BROKER_PORT 1883
 #define REQUEST_TOPIC "request"
+#define TEMP_TOPIC "temperature"
+#define HUMIDITY_TOPIC "humidity"
 #define BROKER_INTERVAL 5 // ms
 #define TX_PIN D0
 #define RX_PIN D1
@@ -21,7 +24,7 @@ WiFiClient wifiClient;
 
 MqttClient mqttClient(wifiClient);
 
-ulong previousMillis = millis();
+u_char buffer[5];
 
 void onMqttMessage(int messageSize);
 
@@ -51,14 +54,6 @@ void setup()
 
   Serial.println("\nWifi connected.");
 
-  // IPAddress serverIP;
-  // if (!WiFi.hostByName("laptop.local", serverIP))
-  // {
-  //   Serial.println("Failed to resolve laptop.local");
-  //   while (1)
-  //     ;
-  // }
-
   if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
   {
     Serial.print("MQTT connection failed! Error code = ");
@@ -85,10 +80,41 @@ void loop()
   }
   mqttClient.poll();
 
-  // while (sensorSerial.available())
-  // {
-  //   Serial.print((char)sensorSerial.read());
-  // }
+  if (sensorSerial.available())
+  {
+    sensorSerial.readBytesUntil('\n', buffer, 16);
+    Serial.println("received message from sensor");
+    int requestTypeInt = (int)buffer[0];
+    try
+    {
+      RequestType requestType = intToRequestType(requestTypeInt);
+      float value = 0;
+      memcpy(&value, buffer + 1, 4);
+      switch (requestType)
+      {
+      case Temperature:
+      {
+        mqttClient.beginMessage(TEMP_TOPIC);
+        break;
+      }
+      case Humidity:
+      {
+        mqttClient.beginMessage(HUMIDITY_TOPIC);
+        break;
+      }
+      default:
+      {
+        return;
+      }
+      }
+      mqttClient.print(value);
+      mqttClient.endMessage();
+    }
+    catch (const std::invalid_argument &e)
+    {
+      return;
+    }
+  }
 }
 
 void onMqttMessage(int messageSize)
@@ -100,14 +126,16 @@ void onMqttMessage(int messageSize)
     message += mqttClient.readString();
   }
 
-  Serial.println("received message");
+  Serial.println("received message from Mqtt");
 
   if (topic == REQUEST_TOPIC)
   {
     RequestType requestType = resolveRequestType(message);
     if (requestType != RequestType::None)
     {
-      sensorSerial.println(static_cast<int>(requestType));
+      sensorSerial.write(static_cast<uint8_t>(requestType));
+      sensorSerial.write('\n');
+      sensorSerial.flush();
     }
   }
 }

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "RequestType.h"
+#include <stdexcept>
 
 RequestType resolveRequestType(String input)
 {
@@ -31,6 +32,6 @@ RequestType intToRequestType(int input){
     case static_cast<int>(RequestType::Temperature):
         return static_cast<RequestType>(input);
     default:
-        throw "invalid number";
+        throw std::invalid_argument("invalid number");
 }
 }
