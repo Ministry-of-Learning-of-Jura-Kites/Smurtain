@@ -1,11 +1,12 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
-import Highcharts from 'highcharts';
+import { Component, Inject, Input, OnInit, PLATFORM_ID } from '@angular/core';
+import Highcharts, { Options } from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import More from 'highcharts/highcharts-more'; // For the gauge
 import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsGauge from 'highcharts/modules/solid-gauge';
-import { FlowbiteService } from '../../../service/flowbite.service';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Subject } from 'rxjs';
+import { BrokerService } from '../../../service/broker.service';
 // Initialize the modules
 if (typeof Highcharts === 'object') {
   More(Highcharts);
@@ -21,23 +22,32 @@ if (typeof Highcharts === 'object') {
   styleUrls: ['./temperature.component.css'],
 })
 export class TemperatureComponent implements OnInit {
+  temperature: number | undefined = undefined;
   isBrowser: boolean;
   Highcharts: typeof Highcharts = Highcharts;
-  chartOptions: Highcharts.Options = {};
+  chart: Highcharts.Chart | undefined;
+  chartOptions: Options = {};
+  updateFlag: boolean = false;
+
   constructor(
     @Inject(PLATFORM_ID) platformId: Object,
-    private flowbiteService: FlowbiteService
+    private brokerService: BrokerService
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
+
   ngOnInit(): void {
-    console.log('gg');
-    this.flowbiteService.loadFlowbite((flowbite) => {
-      // Your custom code here
-      console.log('Flowbite loaded', flowbite);
-    });
     if (this.isBrowser) {
       this.initializeChart();
+      this.brokerService.temperature.subscribe(this.handleUpdate.bind(this));
+    }
+  }
+
+  handleUpdate(value: number) {
+    this.temperature = value;
+    if (this.isBrowser) {
+      (this.chartOptions.series![0] as any).data = [value];
+      this.updateFlag = true;
     }
   }
 
@@ -52,18 +62,21 @@ export class TemperatureComponent implements OnInit {
         height: '80%',
       },
       title: {
-        text: 'Speedometer',
+        text: 'Temperature',
       },
       pane: {
         startAngle: -90,
-        endAngle: 89.9,
+        endAngle: 90,
         background: undefined,
         center: ['50%', '75%'],
-        size: '110%',
+        size: '130%',
+      },
+      credits: {
+        enabled: false,
       },
       yAxis: {
         min: 0,
-        max: 200,
+        max: 50,
         tickPixelInterval: 72,
         tickPosition: 'inside',
         tickColor:
@@ -82,20 +95,26 @@ export class TemperatureComponent implements OnInit {
         plotBands: [
           {
             from: 0,
-            to: 130,
+            to: 25,
             color: '#55BF3B',
             thickness: 20,
           },
           {
-            from: 150,
-            to: 200,
-            color: '#DF5353',
+            from: 25,
+            to: 35,
+            color: '#DDDF0D',
             thickness: 20,
           },
           {
-            from: 120,
-            to: 160,
-            color: '#DDDF0D',
+            from: 35,
+            to: 40,
+            color: '#ff3300',
+            thickness: 20,
+          },
+          {
+            from: 40,
+            to: 50,
+            color: '#DF5353',
             thickness: 20,
           },
         ],
@@ -104,12 +123,12 @@ export class TemperatureComponent implements OnInit {
         {
           name: 'Speed',
           type: 'gauge',
-          data: [80],
+          data: [],
           tooltip: {
-            valueSuffix: ' km/h',
+            valueSuffix: ' °C',
           },
           dataLabels: {
-            format: '{y} km/h',
+            format: '{y} °C',
             borderWidth: 0,
             color:
               (Highcharts.defaultOptions.title &&
@@ -134,24 +153,5 @@ export class TemperatureComponent implements OnInit {
         },
       ],
     };
-
-    setInterval(() => {
-      const chart = Highcharts.charts[0];
-      if (
-        chart &&
-        chart.series &&
-        chart.series[0] &&
-        chart.series[0].points[0]
-      ) {
-        const point = chart.series[0].points[0];
-        const currentValue = point.y ?? 0; // Fallback to 0 if point.y is undefined
-        const inc = Math.round((Math.random() - 0.5) * 20);
-        let newVal = currentValue + inc;
-        if (newVal < 0 || newVal > 200) {
-          newVal = currentValue - inc;
-        }
-        point.update(newVal);
-      }
-    }, 3000);
   }
 }

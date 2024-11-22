@@ -6,11 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"smurtain.com/backend/src/api"
 	"smurtain.com/backend/src/pkg/broker"
 	_ "smurtain.com/backend/src/pkg/broker"
-
-	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -20,14 +17,6 @@ func main() {
 	go func() {
 		<-sigs
 		done <- true
-	}()
-
-	e := echo.New()
-	apiGroup := e.Group("/api")
-	api.CreateRoutes(apiGroup)
-
-	go func() {
-		e.Logger.Fatal(e.Start(":8080"))
 	}()
 
 	go func() {

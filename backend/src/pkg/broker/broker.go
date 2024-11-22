@@ -18,7 +18,12 @@ func init() {
 	_ = MqttServer.AddHook(new(auth.AllowHook), nil)
 
 	tcp := listeners.NewTCP(listeners.Config{ID: "t1", Address: ":1883"})
+	ws := listeners.NewWebsocket(listeners.Config{ID: "ws1", Address: ":1884"})
 	err := MqttServer.AddListener(tcp)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = MqttServer.AddListener(ws)
 	if err != nil {
 		log.Fatal(err)
 	}
