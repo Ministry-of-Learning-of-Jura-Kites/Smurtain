@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { HumidityComponent } from './humidity.component';
 
-describe('HumidityComponent', () => {
+describe('TemperatureComponent', () => {
   let component: HumidityComponent;
   let fixture: ComponentFixture<HumidityComponent>;
 

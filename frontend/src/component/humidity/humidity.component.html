@@ -1,1 +1,9 @@
-<p>humidity works!</p>
+<div>
+    <highcharts-chart
+      *ngIf= "isBrowser"
+      [Highcharts]="Highcharts"
+      [options]="chartOptions"
+      [(update)]="updateFlag"
+      style="width: 50%; height: 50%; display: block;"
+    ></highcharts-chart>
+  </div>
