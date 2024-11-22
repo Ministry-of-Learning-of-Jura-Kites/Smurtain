@@ -15,14 +15,14 @@ if (typeof Highcharts === 'object') {
 }
 
 @Component({
-  selector: 'app-temperature',
+  selector: 'app-humidity',
   standalone: true,
   imports: [HighchartsChartModule, CommonModule],
   templateUrl: './humidity.component.html',
   styleUrls: ['./humidity.component.css'],
 })
 export class HumidityComponent implements OnInit {
-  temperature: number | undefined = undefined;
+  humidity: number | undefined = undefined;
   isBrowser: boolean;
   Highcharts: typeof Highcharts = Highcharts;
   chart: Highcharts.Chart | undefined;
@@ -39,12 +39,12 @@ export class HumidityComponent implements OnInit {
   ngOnInit(): void {
     if (this.isBrowser) {
       this.initializeChart();
-      this.brokerService.temperature.subscribe(this.handleUpdate.bind(this));
+      this.brokerService.humidity.subscribe(this.handleUpdate.bind(this));
     }
   }
 
   handleUpdate(value: number) {
-    this.temperature = value;
+    this.humidity = value;
     if (this.isBrowser) {
       (this.chartOptions.series![0] as any).data = [value];
       this.updateFlag = true;
@@ -62,7 +62,7 @@ export class HumidityComponent implements OnInit {
         height: '80%',
       },
       title: {
-        text: 'Temperature',
+        text: 'Humidity',
       },
       pane: {
         startAngle: -90,
