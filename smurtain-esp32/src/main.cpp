@@ -11,11 +11,28 @@
 #define DHT_PIN 4
 #define DHT_TYPE DHTesp::DHT11
 #define ULTRASONIC_TRIG_PIN 27
-#define ULTRASONIC_ECHO_PIN 27
+#define ULTRASONIC_ECHO_PIN 26
+#define MOTOR_PIN 33
 #define TX_PIN 18
 #define RX_PIN 19
 
-EspSoftwareSerial::UART gatewaySerial;
+enum UltrasonicSensorState
+{
+  TriggerLow1,
+  TriggerWait1,
+  TriggerHigh,
+  TriggerWait2,
+  Echo
+};
+
+UltrasonicSensorState ultrasonicSensorState;
+
+// EspSoftwareSerial::UART gatewaySerial;
+
+#define gatewaySerial Serial2
+
+#define RXD2 16
+#define TXD2 17
 
 DHTesp dht;
 
@@ -26,6 +43,10 @@ std::array<unsigned char, 4> floatToUCharArray(float input);
 template <typename T>
 void printArray(Stream &Serial, T *array, size_t size);
 
+ulong lastUltrasonicTime = 0;
+
+double distance = 0;
+
 void setup()
 {
   Serial.begin(115200);
@@ -33,39 +54,91 @@ void setup()
   while (!Serial)
     ;
 
-  gatewaySerial.begin(9600, EspSoftwareSerial::SWSERIAL_8O1, RX_PIN, TX_PIN);
+  gatewaySerial.begin(9600, SerialConfig::SERIAL_8O1, RXD2, TXD2);
+
+  // gatewaySerial.begin(9600, EspSoftwareSerial::Config::SWSERIAL_8O1,RX_PIN);
 
   while (!gatewaySerial)
     ;
 
   Serial.println("started");
+
+  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
+  pinMode(MOTOR_PIN, OUTPUT);
+  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 }
 
 void loop()
 {
-  if (gatewaySerial.available())
+  switch (ultrasonicSensorState)
   {
-    int data = gatewaySerial.read();
-    if(data==(int)'\n'){
-      return;
-    }
-    Serial.println("received message");
-    try
+  case TriggerLow1:
+    digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+    ultrasonicSensorState = TriggerWait1;
+    break;
+
+  case TriggerWait1:
+    if (millis() >= 2 + lastUltrasonicTime)
     {
-      int requestTypeInt = data;
-      RequestType requestType = intToRequestType(requestTypeInt);
-      Serial.println("Survived");
-      handleRequest(requestType);
+      ultrasonicSensorState = TriggerHigh;
+      lastUltrasonicTime = millis();
     }
-    catch (const std::invalid_argument &e)
+    break;
+
+  case TriggerHigh:
+    digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
+    ultrasonicSensorState = TriggerWait2;
+    break;
+
+  case TriggerWait2:
+    if (millis() >= 10 + lastUltrasonicTime)
     {
-      return;
+      ultrasonicSensorState = Echo;
+      lastUltrasonicTime = millis();
     }
-    catch (const std::out_of_range &e)
-    {
-      return;
-    }
+    break;
+
+  case Echo:
+    digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+    ulong duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH);
+    distance = (duration * .0343) / 2;
+    // if (distance > 5)
+    // {
+    //   digitalWrite(MOTOR_PIN, HIGH);
+    // }
+    // else
+    // {
+    //   digitalWrite(MOTOR_PIN, LOW);
+    // }
+    ultrasonicSensorState = TriggerLow1;
+    break;
   }
+
+  // if (gatewaySerial.available())
+  // {
+  //   int data = gatewaySerial.read();
+  //   if (data == (int)'\n')
+  //   {
+  //     return;
+  //   }
+  //   Serial.println("received message: " + String(data));
+  //   try
+  //   {
+  //     int requestTypeInt = data;
+  //     RequestType requestType = intToRequestType(requestTypeInt);
+  //     Serial.println("Survived");
+  //     handleRequest(requestType);
+  //   }
+  //   catch (const std::invalid_argument &e)
+  //   {
+  //     Serial.println("Invalid");
+  //     return;
+  //   }
+  //   catch (const std::out_of_range &e)
+  //   {
+  //     return;
+  //   }
+  // }
 }
 
 void handleRequest(RequestType requestType)
