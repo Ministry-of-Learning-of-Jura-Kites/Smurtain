@@ -33,11 +33,11 @@ export class BrokerService {
   // Map to store DataWithTime for each topic
   private dataStore: Map<string, DataWithTime[]> = new Map();
   private db: IDBDatabase | undefined;
+  private dbInitialized = new Subject<boolean>(); // To track the DB initialization status
 
   constructor(@Inject(PLATFORM_ID) private platformId: InjectionToken<Object>) {
     if (isPlatformBrowser(platformId)) {
       this.initializeDatabase();
-
       this.client = mqtt.connect(MQTT_OPTIONS);
 
       this.client.on('connect', () => {
@@ -109,12 +109,14 @@ export class BrokerService {
     request.onsuccess = () => {
       this.db = request.result;
       console.log('IndexedDB Initialized');
+      this.dbInitialized.next(true); // Notify that the DB is ready
     };
 
     request.onerror = (event) => {
       console.error('Error opening IndexedDB:', event);
     };
   }
+
   private storeData(topic: string, data: DataWithTime): void {
     if (!this.db) {
       console.error('IndexedDB not initialized.');
@@ -135,27 +137,35 @@ export class BrokerService {
       this.printDatabaseContents(topic); // Print the contents of the store for debugging
     };
   }
+
+  // Wait until the IndexedDB is initialized before accessing it
   public getData(topic: string): Promise<DataWithTime[]> {
     return new Promise((resolve, reject) => {
-      if (!this.db) {
-        reject('IndexedDB not initialized.');
-        return;
-      }
+      this.dbInitialized.subscribe((initialized) => {
+        if (initialized) {
+          if (!this.db) {
+            reject('IndexedDB not initialized.');
+            return;
+          }
 
-      const transaction = this.db.transaction(topic, 'readonly');
-      const store = transaction.objectStore(topic);
+          const transaction = this.db.transaction(topic, 'readonly');
+          const store = transaction.objectStore(topic);
 
-      const request = store.getAll();
+          const request = store.getAll();
 
-      request.onsuccess = () => {
-        console.log(`Data retrieved for topic ${topic}:`, request.result);
-        resolve(request.result as DataWithTime[]);
-      };
+          request.onsuccess = () => {
+            console.log(`Data retrieved for topic ${topic}:`, request.result);
+            resolve(request.result as DataWithTime[]);
+          };
 
-      request.onerror = (event) => {
-        console.error(`Error retrieving data for topic ${topic}:`, event);
-        reject(event);
-      };
+          request.onerror = (event) => {
+            console.error(`Error retrieving data for topic ${topic}:`, event);
+            reject(event);
+          };
+        } else {
+          reject('IndexedDB not initialized.');
+        }
+      });
     });
   }
 
@@ -179,3 +189,4 @@ export class BrokerService {
     };
   }
 }
+
