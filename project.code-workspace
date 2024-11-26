@@ -15,7 +15,15 @@
   "settings": {
     "files.associations": {
       "*.h": "c",
-      "stdexcept": "cpp"
+      "stdexcept": "cpp",
+      "*.tcc": "cpp",
+      "memory": "cpp",
+      "fstream": "cpp",
+      "istream": "cpp",
+      "ostream": "cpp",
+      "sstream": "cpp",
+      "streambuf": "cpp",
+      "memory_resource": "cpp"
     }
   }
 }

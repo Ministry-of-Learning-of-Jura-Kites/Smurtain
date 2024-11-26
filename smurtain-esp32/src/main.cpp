@@ -15,6 +15,7 @@
 #define MOTOR_PIN 33
 #define TX_PIN 18
 #define RX_PIN 19
+#define SAMPLING_INTERVAL 5000 // ms
 
 enum UltrasonicSensorState
 {
@@ -42,6 +43,8 @@ DHTesp dht;
 
 boolean isCurtainOn = false;
 
+ulong lastSamplingTime = 0;
+
 void handleRequest(RequestType requestType);
 
 std::array<unsigned char, 4> floatToUCharArray(float input);
@@ -52,6 +55,8 @@ void printArray(Stream &Serial, T *array, size_t size);
 void distanceUpdate();
 
 void handleGatewayMessage();
+
+void sample();
 
 void setup()
 {
@@ -80,10 +85,20 @@ void setup()
 void loop()
 {
   distanceUpdate();
-
+  sample();
   if (gatewaySerial.available())
   {
     handleGatewayMessage();
+  }
+}
+
+void sample()
+{
+  if (millis() >= SAMPLING_INTERVAL + lastSamplingTime)
+  {
+    handleRequest(RequestType::Temperature);
+    handleRequest(RequestType::Light);
+    handleRequest(RequestType::Humidity);
   }
 }
 
@@ -104,11 +119,6 @@ void handleGatewayMessage()
   catch (const std::invalid_argument &e)
   {
     Serial.println("Invalid: " + String(data));
-    return;
-  }
-  catch (const std::out_of_range &e)
-  {
-    Serial.println("Out of range: " + String(data));
     return;
   }
 }
@@ -144,17 +154,19 @@ void handleRequest(RequestType requestType)
   case RequestType::Light:
   {
     uint32_t lightVoltage = analogRead(LIGHT_PIN);
-    float value = (float)lightVoltage/(lightVoltage+10000);
+    float value = (float)lightVoltage / (lightVoltage + 10000);
     auto ucharArray = floatToUCharArray(value);
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
     gatewaySerial.write('\n');
     break;
   }
-  case RequestType::CurtainStatus:{
+  case RequestType::CurtainStatus:
+  {
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     gatewaySerial.write(isCurtainOn);
     gatewaySerial.write('\n');
+    break;
   }
   }
 }

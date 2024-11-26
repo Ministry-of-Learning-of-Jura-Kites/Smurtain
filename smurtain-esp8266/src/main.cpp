@@ -18,15 +18,17 @@
 
 boolean has_encountered_error = false;
 
+u_char buffer[6];
+
 EspSoftwareSerial::UART sensorSerial;
 
 WiFiClient wifiClient;
 
 MqttClient mqttClient(wifiClient);
 
-u_char buffer[5];
-
 void onMqttMessage(int messageSize);
+
+void handleSensorMessage();
 
 void setup()
 {
@@ -37,89 +39,89 @@ void setup()
 
   Serial.println("Serial connected");
 
-  sensorSerial.begin(9600, EspSoftwareSerial::Config::SWSERIAL_8O1,RX_PIN,TX_PIN);
+  sensorSerial.begin(9600, EspSoftwareSerial::Config::SWSERIAL_8O1, RX_PIN, TX_PIN);
 
   while (!sensorSerial)
     ;
 
   Serial.println("Sensor connected");
 
-  // WiFi.mode(WIFI_STA);
-  // WiFi.begin(WIFI_SSID, WIFI_PASS);
-  // while (WiFi.status() != WL_CONNECTED)
-  // {
-  //   Serial.print(".");
-  //   delay(1000);
-  // }
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(1000);
+  }
 
-  // Serial.println("\nWifi connected.");
+  Serial.println("\nWifi connected.");
 
-  // if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
-  // {
-  //   Serial.print("MQTT connection failed! Error code = ");
+  if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
+  {
+    Serial.print("MQTT connection failed! Error code = ");
 
-  //   Serial.println(mqttClient.connectError());
+    Serial.println(mqttClient.connectError());
 
-  //   has_encountered_error = true;
+    has_encountered_error = true;
 
-  //   return;
-  // }
+    return;
+  }
 
-  // Serial.println("MQTT broker is connected.");
+  Serial.println("MQTT broker is connected.");
 
-  // mqttClient.onMessage(onMqttMessage);
+  mqttClient.onMessage(onMqttMessage);
 
-  // mqttClient.subscribe(REQUEST_TOPIC);
+  mqttClient.subscribe(REQUEST_TOPIC);
 }
 
 void loop()
 {
-
-  sensorSerial.println("ff");
-  while(sensorSerial.available()){
-    Serial.print((char)sensorSerial.read());
+  if (has_encountered_error)
+  {
+    return;
   }
-  // if (has_encountered_error)
-  // {
-  //   return;
-  // }
-  // mqttClient.poll();
+  mqttClient.poll();
 
-  // if (sensorSerial.available())
-  // {
-  //   sensorSerial.readBytesUntil('\n', buffer, 16);
-  //   Serial.println("received message from sensor");
-  //   int requestTypeInt = (int)buffer[0];
-  //   try
-  //   {
-  //     RequestType requestType = intToRequestType(requestTypeInt);
-  //     float value = 0;
-  //     memcpy(&value, buffer + 1, 4);
-  //     switch (requestType)
-  //     {
-  //     case Temperature:
-  //     {
-  //       mqttClient.beginMessage(TEMP_TOPIC);
-  //       break;
-  //     }
-  //     case Humidity:
-  //     {
-  //       mqttClient.beginMessage(HUMIDITY_TOPIC);
-  //       break;
-  //     }
-  //     default:
-  //     {
-  //       return;
-  //     }
-  //     }
-  //     mqttClient.print(value);
-  //     mqttClient.endMessage();
-  //   }
-  //   catch (const std::invalid_argument &e)
-  //   {
-  //     return;
-  //   }
-  // }
+  if (sensorSerial.available())
+  {
+    handleSensorMessage();
+  }
+}
+
+void handleSensorMessage()
+{
+  sensorSerial.readBytesUntil('\n', buffer, 6);
+  Serial.println("received message from sensor");
+  int requestTypeInt = (int)buffer[0];
+  try
+  {
+    RequestType requestType = intToRequestType(requestTypeInt);
+    float value = 0;
+    memcpy(&value, buffer + 1, 4);
+    switch (requestType)
+    {
+    case Temperature:
+    {
+      mqttClient.beginMessage(TEMP_TOPIC);
+      break;
+    }
+    case Humidity:
+    {
+      mqttClient.beginMessage(HUMIDITY_TOPIC);
+      break;
+    }
+    default:
+    {
+      return;
+    }
+    }
+    mqttClient.print(value);
+    mqttClient.endMessage();
+  }
+  catch (const std::invalid_argument &e)
+  {
+    return;
+  }
 }
 
 void onMqttMessage(int messageSize)
@@ -138,7 +140,6 @@ void onMqttMessage(int messageSize)
     RequestType requestType = resolveRequestType(message);
     if (requestType != RequestType::None)
     {
-      Serial.println(static_cast<uint8_t>(requestType));
       sensorSerial.write(static_cast<uint8_t>(requestType));
       sensorSerial.write('\n');
       sensorSerial.flush();
