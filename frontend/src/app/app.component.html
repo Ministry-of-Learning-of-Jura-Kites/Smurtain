@@ -1,7 +1,19 @@
 <router-outlet></router-outlet>
-<app-temperature></app-temperature>
-<app-light-detection></app-light-detection>
-<app-humidity></app-humidity>
-<app-temperature-graph></app-temperature-graph>
-<app-light-graph></app-light-graph>
-<app-humidity-graph></app-humidity-graph>
+<mat-tab-group mat-stretch-tabs="false" mat-align-tabs="center">
+  <mat-tab label="Charts">
+    <div class="chart-parent">
+      <app-temperature-chart
+        style="grid-column: 1; grid-row: 1"
+      ></app-temperature-chart>
+      <app-light-chart style="grid-column: 2; grid-row: 1"></app-light-chart>
+      <app-humidity-chart
+        style="grid-column: 3; grid-row: 1"
+      ></app-humidity-chart>
+    </div>
+  </mat-tab>
+  <mat-tab label="Graphs" color="black">
+    <app-temperature-graph></app-temperature-graph>
+    <app-light-graph></app-light-graph>
+    <app-humidity-graph></app-humidity-graph>
+  </mat-tab>
+</mat-tab-group>

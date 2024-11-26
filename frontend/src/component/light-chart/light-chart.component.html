@@ -1,9 +1,9 @@
-<div>
+<div style="width: 100%">
     <highcharts-chart
       *ngIf= "isBrowser"
       [Highcharts]="Highcharts"
       [options]="chartOptions"
       [(update)]="updateFlag"
-      style="width: 50%; height: 50%; display: block;"
+      class="chart"
     ></highcharts-chart>
-  </div>
+</div>

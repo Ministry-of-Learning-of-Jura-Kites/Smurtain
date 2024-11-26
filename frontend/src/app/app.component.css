@@ -1,0 +1,9 @@
+.chart-parent {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.mdc-tab__text-label {
+    color: black !important;
+}

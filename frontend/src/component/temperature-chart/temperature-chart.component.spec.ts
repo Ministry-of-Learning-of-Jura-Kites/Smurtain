@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LightDetectionComponent } from './light-detection.component';
+import { TemperatureChartComponent } from './temperature-chart.component';
 
-describe('LightDetectionComponent', () => {
-  let component: LightDetectionComponent;
-  let fixture: ComponentFixture<LightDetectionComponent>;
+describe('TemperatureComponent', () => {
+  let component: TemperatureChartComponent;
+  let fixture: ComponentFixture<TemperatureChartComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LightDetectionComponent]
+      imports: [TemperatureChartComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(LightDetectionComponent);
+    fixture = TestBed.createComponent(TemperatureChartComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

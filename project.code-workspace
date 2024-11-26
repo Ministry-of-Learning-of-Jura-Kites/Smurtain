@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "smurtain-esp32",
+			"path": "smurtain-esp32"
+		},
+		{
+			"name": "smurtain-esp8266",
+			"path": "smurtain-esp8266"
+		},
+	],
+  "settings": {}
+}
