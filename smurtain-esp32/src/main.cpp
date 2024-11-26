@@ -34,7 +34,13 @@ UltrasonicSensorState ultrasonicSensorState;
 #define RXD2 16
 #define TXD2 17
 
+ulong lastUltrasonicTime = 0;
+
+double distance = 0;
+
 DHTesp dht;
+
+boolean isCurtainOn = false;
 
 void handleRequest(RequestType requestType);
 
@@ -43,9 +49,9 @@ std::array<unsigned char, 4> floatToUCharArray(float input);
 template <typename T>
 void printArray(Stream &Serial, T *array, size_t size);
 
-ulong lastUltrasonicTime = 0;
+void distanceUpdate();
 
-double distance = 0;
+void handleGatewayMessage();
 
 void setup()
 {
@@ -63,13 +69,115 @@ void setup()
 
   Serial.println("started");
 
+  pinMode(LIGHT_PIN, INPUT);
   pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
   pinMode(MOTOR_PIN, OUTPUT);
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
+
+  dht.setup(DHT_PIN, DHT_TYPE);
 }
 
 void loop()
 {
+  distanceUpdate();
+
+  if (gatewaySerial.available())
+  {
+    handleGatewayMessage();
+  }
+}
+
+void handleGatewayMessage()
+{
+  int data = gatewaySerial.read();
+  if (data == (int)'\n')
+  {
+    return;
+  }
+  Serial.println("received message: " + String(data));
+  try
+  {
+    int requestTypeInt = data;
+    RequestType requestType = intToRequestType(requestTypeInt);
+    handleRequest(requestType);
+  }
+  catch (const std::invalid_argument &e)
+  {
+    Serial.println("Invalid: " + String(data));
+    return;
+  }
+  catch (const std::out_of_range &e)
+  {
+    Serial.println("Out of range: " + String(data));
+    return;
+  }
+}
+
+void handleRequest(RequestType requestType)
+{
+  switch (requestType)
+  {
+  // case RequestType::On: {
+
+  // }
+  // case RequestType::Off: {
+
+  // }
+  case RequestType::Temperature:
+  {
+    float value = dht.getTemperature();
+    auto ucharArray = floatToUCharArray(value);
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
+  }
+  case RequestType::Humidity:
+  {
+    float value = dht.getHumidity();
+    auto ucharArray = floatToUCharArray(value);
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
+  }
+  case RequestType::Light:
+  {
+    uint32_t lightVoltage = analogRead(LIGHT_PIN);
+    float value = (float)lightVoltage/(lightVoltage+10000);
+    auto ucharArray = floatToUCharArray(value);
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
+    gatewaySerial.write('\n');
+    break;
+  }
+  case RequestType::CurtainStatus:{
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    gatewaySerial.write(isCurtainOn);
+    gatewaySerial.write('\n');
+  }
+  }
+}
+
+std::array<unsigned char, 4> floatToUCharArray(float input)
+{
+  std::array<unsigned char, 4> array = {0};
+  memcpy(array.begin(), &input, 4);
+  return array;
+}
+
+template <typename T>
+void printArray(Stream &Serial, T *array, size_t size)
+{
+  for (size_t i = 0; i < size; i++)
+  {
+    Serial.write(array[i]);
+  }
+}
+
+void distanceUpdate()
+{
+
   switch (ultrasonicSensorState)
   {
   case TriggerLow1:
@@ -102,90 +210,7 @@ void loop()
     digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
     ulong duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH);
     distance = (duration * .0343) / 2;
-    // if (distance > 5)
-    // {
-    //   digitalWrite(MOTOR_PIN, HIGH);
-    // }
-    // else
-    // {
-    //   digitalWrite(MOTOR_PIN, LOW);
-    // }
     ultrasonicSensorState = TriggerLow1;
     break;
-  }
-
-  // if (gatewaySerial.available())
-  // {
-  //   int data = gatewaySerial.read();
-  //   if (data == (int)'\n')
-  //   {
-  //     return;
-  //   }
-  //   Serial.println("received message: " + String(data));
-  //   try
-  //   {
-  //     int requestTypeInt = data;
-  //     RequestType requestType = intToRequestType(requestTypeInt);
-  //     Serial.println("Survived");
-  //     handleRequest(requestType);
-  //   }
-  //   catch (const std::invalid_argument &e)
-  //   {
-  //     Serial.println("Invalid");
-  //     return;
-  //   }
-  //   catch (const std::out_of_range &e)
-  //   {
-  //     return;
-  //   }
-  // }
-}
-
-void handleRequest(RequestType requestType)
-{
-  switch (requestType)
-  {
-  // case RequestType::On: {
-
-  // }
-  // case RequestType::Off: {
-
-  // }
-  case RequestType::Temperature:
-  {
-    dht.setup(DHT_PIN, DHT_TYPE);
-    float value = dht.getTemperature();
-    auto ucharArray = floatToUCharArray(value);
-    gatewaySerial.write(static_cast<uint8_t>(requestType));
-    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
-    gatewaySerial.write('\n');
-    break;
-  }
-  case RequestType::Humidity:
-  {
-    dht.setup(DHT_PIN, DHT_TYPE);
-    float value = dht.getHumidity();
-    auto ucharArray = floatToUCharArray(value);
-    gatewaySerial.write(static_cast<uint8_t>(requestType));
-    printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
-    gatewaySerial.write('\n');
-    break;
-  }
-  }
-}
-
-std::array<unsigned char, 4> floatToUCharArray(float input)
-{
-  std::array<unsigned char, 4> array = {0};
-  memcpy(array.begin(), &input, 4);
-  return array;
-}
-
-template <typename T>
-void printArray(Stream &Serial, T *array, size_t size)
-{
-  for (size_t i = 0; i < size; i++)
-  {
-    Serial.write(array[i]);
   }
 }

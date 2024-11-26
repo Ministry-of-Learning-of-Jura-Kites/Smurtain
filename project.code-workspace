@@ -12,5 +12,10 @@
 			"path": "smurtain-esp8266"
 		},
 	],
-  "settings": {}
+  "settings": {
+    "files.associations": {
+      "*.h": "c",
+      "stdexcept": "cpp"
+    }
+  }
 }

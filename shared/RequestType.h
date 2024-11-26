@@ -6,7 +6,9 @@ enum RequestType
 {
   None,
   Temperature,
+  Light,
   Humidity,
+  CurtainStatus,
   On,
   Off,
 };
