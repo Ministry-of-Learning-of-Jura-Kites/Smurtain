@@ -63,7 +63,7 @@ export default function createChartOptions(
       tickWidth: 2,
       minorTickInterval: undefined,
       labels: {
-        distance: 0,
+        distance: 15,
         style: {
           fontSize: '14px',
         },
