@@ -33,7 +33,7 @@ func main() {
 	}()
 
 	go func() {
-		err := broker.MqttServer.Subscribe("curtain_status", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+		err := broker.MqttServer.Subscribe("status/curtain_status", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 			broker.MqttServer.Log.Info("received")
 			var newIsCurtainOn bool
 			message := string(pk.Payload)

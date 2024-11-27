@@ -10,8 +10,10 @@
 #define BROKER_HOST "laptop.local"
 #define BROKER_PORT 1883
 #define REQUEST_TOPIC "request"
-#define TEMP_TOPIC "temperature"
-#define HUMIDITY_TOPIC "humidity"
+#define TEMP_TOPIC "status/temperature"
+#define HUMIDITY_TOPIC "status/humidity"
+#define LIGHT_TOPIC "status/light"
+#define CURTAIN_STATUS_TOPIC "status/curtain_status"
 #define BROKER_INTERVAL 5 // ms
 #define TX_PIN D0
 #define RX_PIN D1
@@ -29,6 +31,10 @@ MqttClient mqttClient(wifiClient);
 void onMqttMessage(int messageSize);
 
 void handleSensorMessage();
+
+void sendBooleanValue(String topic);
+
+void sendFloatValue(String topic);
 
 void setup()
 {
@@ -96,18 +102,27 @@ void handleSensorMessage()
   try
   {
     RequestType requestType = intToRequestType(requestTypeInt);
-    float value = 0;
-    memcpy(&value, buffer + 1, 4);
     switch (requestType)
     {
     case Temperature:
     {
-      mqttClient.beginMessage(TEMP_TOPIC);
+      sendFloatValue(TEMP_TOPIC);
       break;
     }
     case Humidity:
     {
-      mqttClient.beginMessage(HUMIDITY_TOPIC);
+      sendFloatValue(HUMIDITY_TOPIC);
+      break;
+    }
+    case Light:
+    {
+      sendFloatValue(LIGHT_TOPIC);
+      break;
+    }
+
+    case CurtainStatus:
+    {
+      sendBooleanValue(CURTAIN_STATUS_TOPIC);
       break;
     }
     default:
@@ -115,13 +130,45 @@ void handleSensorMessage()
       return;
     }
     }
-    mqttClient.print(value);
-    mqttClient.endMessage();
   }
   catch (const std::invalid_argument &e)
   {
     return;
   }
+}
+
+void sendFloatValue(String topic)
+{
+  float value = 0;
+  memcpy(&value, buffer + 1, 4);
+  mqttClient.beginMessage(topic);
+  mqttClient.print(value);
+  mqttClient.endMessage();
+}
+
+void sendBooleanValue(String topic)
+{
+  String value;
+  switch (buffer[1])
+  {
+  case 0:
+  {
+    value = "off";
+    break;
+  }
+  case 1:
+  {
+    value = "on";
+    break;
+  }
+  default:
+  {
+    return;
+  }
+  }
+  mqttClient.beginMessage(topic);
+  mqttClient.print(value);
+  mqttClient.endMessage();
 }
 
 void onMqttMessage(int messageSize)
