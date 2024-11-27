@@ -12,10 +12,14 @@
 #define DHT_TYPE DHTesp::DHT11
 #define ULTRASONIC_TRIG_PIN 27
 #define ULTRASONIC_ECHO_PIN 26
-#define MOTOR_PIN 33
 #define TX_PIN 18
 #define RX_PIN 19
-#define SAMPLING_INTERVAL 5000 // ms
+#define SAMPLING_INTERVAL 1000 // ms
+#define MIN_LIGHT 2000
+#define MAX_LIGHT 4500
+#define MOTOR_SPEED_PIN 15
+#define MOTOR_DIR1_PIN 33
+#define MOTOR_DIR2_PIN 32
 
 enum UltrasonicSensorState
 {
@@ -76,10 +80,16 @@ void setup()
 
   pinMode(LIGHT_PIN, INPUT);
   pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
-  pinMode(MOTOR_PIN, OUTPUT);
+  pinMode(MOTOR_DIR1_PIN, OUTPUT);
+  pinMode(MOTOR_DIR2_PIN, OUTPUT);
+  pinMode(MOTOR_SPEED_PIN, OUTPUT);
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 
   dht.setup(DHT_PIN, DHT_TYPE);
+
+  digitalWrite(MOTOR_DIR1_PIN,LOW);
+  digitalWrite(MOTOR_DIR2_PIN,HIGH);
+  digitalWrite(MOTOR_SPEED_PIN,HIGH);
 }
 
 void loop()
@@ -99,6 +109,7 @@ void sample()
     handleRequest(RequestType::Temperature);
     handleRequest(RequestType::Light);
     handleRequest(RequestType::Humidity);
+    lastSamplingTime=millis();
   }
 }
 
@@ -127,12 +138,17 @@ void handleRequest(RequestType requestType)
 {
   switch (requestType)
   {
-  // case RequestType::On: {
-
-  // }
-  // case RequestType::Off: {
-
-  // }
+  case RequestType::On: {
+    Serial.println("on");
+    digitalWrite(MOTOR_DIR1_PIN,HIGH);
+    digitalWrite(MOTOR_DIR2_PIN,LOW);
+    analogWrite(MOTOR_SPEED_PIN,255);
+  }
+  case RequestType::Off: {
+    digitalWrite(MOTOR_DIR1_PIN,LOW);
+    digitalWrite(MOTOR_DIR2_PIN,HIGH);
+    digitalWrite(MOTOR_SPEED_PIN,HIGH);
+  }
   case RequestType::Temperature:
   {
     float value = dht.getTemperature();
@@ -153,8 +169,8 @@ void handleRequest(RequestType requestType)
   }
   case RequestType::Light:
   {
-    uint32_t lightVoltage = analogRead(LIGHT_PIN);
-    float value = (float)lightVoltage / (lightVoltage + 10000);
+    uint32_t lightRead = analogRead(LIGHT_PIN);
+    float value = ((float)lightRead-MIN_LIGHT)/(MAX_LIGHT-MIN_LIGHT)*100;
     auto ucharArray = floatToUCharArray(value);
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);

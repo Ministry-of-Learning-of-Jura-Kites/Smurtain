@@ -1,17 +1,14 @@
 package broker
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"time"
 
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/hooks/auth"
 	"github.com/mochi-mqtt/server/v2/listeners"
 	"github.com/mochi-mqtt/server/v2/packets"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -43,22 +40,22 @@ func init() {
 
 func connectToMongoDB() {
 
-	mongoURI := "mongodb+srv://sirawitv:Smurtain@smurtain.fjgsc.mongodb.net/"
-	clientOptions := options.Client().ApplyURI(mongoURI)
+	// mongoURI := "mongodb+srv://sirawitv:Smurtain@smurtain.fjgsc.mongodb.net/"
+	// clientOptions := options.Client().ApplyURI(mongoURI)
 
-	var err error
-	MongoClient, err = mongo.Connect(context.Background(), clientOptions)
-	if err != nil {
-		log.Fatal("Failed to connect to MongoDB:", err)
-	}
+	// var err error
+	// MongoClient, err = mongo.Connect(context.Background(), clientOptions)
+	// if err != nil {
+	// 	log.Fatal("Failed to connect to MongoDB:", err)
+	// }
 
-	// Check connection
-	err = MongoClient.Ping(context.Background(), nil)
-	if err != nil {
-		log.Fatal("MongoDB connection ping failed:", err)
-	}
+	// // Check connection
+	// err = MongoClient.Ping(context.Background(), nil)
+	// if err != nil {
+	// 	log.Fatal("MongoDB connection ping failed:", err)
+	// }
 
-	log.Println("Connected to MongoDB")
+	// log.Println("Connected to MongoDB")
 }
 
 func subscribeToTopics() {
@@ -77,20 +74,20 @@ func subscribeToTopics() {
 }
 
 func insertDataToMongo(topic string, message string) {
-	collection := MongoClient.Database("smurtain").Collection("smurtain")
+	// collection := MongoClient.Database("smurtain").Collection("smurtain")
 
-	// Create a document to insert
-	doc := map[string]interface{}{
-		"topic":     topic,
-		"message":   message,
-		"timestamp": time.Now(),
-	}
+	// // Create a document to insert
+	// doc := map[string]interface{}{
+	// 	"topic":     topic,
+	// 	"message":   message,
+	// 	"timestamp": time.Now(),
+	// }
 
-	// Insert the document
-	_, err := collection.InsertOne(context.Background(), doc)
-	if err != nil {
-		log.Printf("Failed to insert message into MongoDB: %v\n", err)
-	} else {
-		log.Println("Message successfully inserted into MongoDB")
-	}
+	// // Insert the document
+	// _, err := collection.InsertOne(context.Background(), doc)
+	// if err != nil {
+	// 	log.Printf("Failed to insert message into MongoDB: %v\n", err)
+	// } else {
+	// 	log.Println("Message successfully inserted into MongoDB")
+	// }
 }

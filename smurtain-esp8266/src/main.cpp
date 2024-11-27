@@ -62,7 +62,7 @@ void setup()
 
   Serial.println("\nWifi connected.");
 
-  if (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
+  while (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
   {
     Serial.print("MQTT connection failed! Error code = ");
 
@@ -70,7 +70,7 @@ void setup()
 
     has_encountered_error = true;
 
-    return;
+    delay(5000);
   }
 
   Serial.println("MQTT broker is connected.");
@@ -87,6 +87,19 @@ void loop()
     return;
   }
   mqttClient.poll();
+  if (!mqttClient.connected())
+  {
+    while (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
+    {
+      Serial.print("MQTT connection failed! Error code = ");
+
+      Serial.println(mqttClient.connectError());
+
+      has_encountered_error = true;
+
+      delay(5000);
+    }
+  }
 
   if (sensorSerial.available())
   {
@@ -99,41 +112,41 @@ void handleSensorMessage()
   sensorSerial.readBytesUntil('\n', buffer, 6);
   Serial.println("received message from sensor");
   int requestTypeInt = (int)buffer[0];
-  try
-  {
-    RequestType requestType = intToRequestType(requestTypeInt);
-    switch (requestType)
-    {
-    case Temperature:
-    {
-      sendFloatValue(TEMP_TOPIC);
-      break;
-    }
-    case Humidity:
-    {
-      sendFloatValue(HUMIDITY_TOPIC);
-      break;
-    }
-    case Light:
-    {
-      sendFloatValue(LIGHT_TOPIC);
-      break;
-    }
-
-    case CurtainStatus:
-    {
-      sendBooleanValue(CURTAIN_STATUS_TOPIC);
-      break;
-    }
-    default:
-    {
-      return;
-    }
-    }
-  }
-  catch (const std::invalid_argument &e)
+  RequestType requestType = intToRequestType(requestTypeInt);
+  if (requestType == RequestType::None)
   {
     return;
+  }
+  switch (requestType)
+  {
+  case Temperature:
+  {
+    Serial.println("temperature");
+    sendFloatValue(TEMP_TOPIC);
+    break;
+  }
+  case Humidity:
+  {
+    Serial.println("humidity");
+    sendFloatValue(HUMIDITY_TOPIC);
+    break;
+  }
+  case Light:
+  {
+    Serial.println("light");
+    sendFloatValue(LIGHT_TOPIC);
+    break;
+  }
+  case CurtainStatus:
+  {
+    Serial.println("curtain status");
+    sendBooleanValue(CURTAIN_STATUS_TOPIC);
+    break;
+  }
+  default:
+  {
+    return;
+  }
   }
 }
 
@@ -187,6 +200,8 @@ void onMqttMessage(int messageSize)
     RequestType requestType = resolveRequestType(message);
     if (requestType != RequestType::None)
     {
+      Serial.print("received from MQTT: ");
+      Serial.println(static_cast<uint8_t>(requestType));
       sensorSerial.write(static_cast<uint8_t>(requestType));
       sensorSerial.write('\n');
       sensorSerial.flush();

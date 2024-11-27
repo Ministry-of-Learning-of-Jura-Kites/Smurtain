@@ -42,6 +42,6 @@ RequestType intToRequestType(int input){
     case static_cast<int>(RequestType::Off):
         return static_cast<RequestType>(input);
     default:
-        throw std::invalid_argument("invalid number");
+    return RequestType::None;
 }
 }

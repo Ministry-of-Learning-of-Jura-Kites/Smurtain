@@ -7,10 +7,8 @@ import (
 	"syscall"
 
 	// "smurtain.com/backend/src/pkg/broker"
-	mqtt "github.com/mochi-mqtt/server/v2"
-	"github.com/mochi-mqtt/server/v2/packets"
+
 	"smurtain.com/backend/src/pkg/broker"
-	"smurtain.com/backend/src/pkg/gmail_service"
 )
 
 func main() {
@@ -18,7 +16,7 @@ func main() {
 	done := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	isCurtainOn := false
+	// isCurtainOn := false
 
 	go func() {
 		<-sigs
@@ -33,26 +31,26 @@ func main() {
 	}()
 
 	go func() {
-		err := broker.MqttServer.Subscribe("status/curtain_status", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
-			broker.MqttServer.Log.Info("received")
-			var newIsCurtainOn bool
-			message := string(pk.Payload)
-			if message == "on" {
-				newIsCurtainOn = true
-			} else if message == "off" {
-				newIsCurtainOn = false
-			}
-			if isCurtainOn != newIsCurtainOn {
-				err := gmail_service.SendEmail(newIsCurtainOn)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			isCurtainOn = newIsCurtainOn
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
+		// err := broker.MqttServer.Subscribe("status/curtain_status", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+		// 	broker.MqttServer.Log.Info("received")
+		// 	var newIsCurtainOn bool
+		// 	message := string(pk.Payload)
+		// 	if message == "on" {
+		// 		newIsCurtainOn = true
+		// 	} else if message == "off" {
+		// 		newIsCurtainOn = false
+		// 	}
+		// 	if isCurtainOn != newIsCurtainOn {
+		// 		err := gmail_service.SendEmail(newIsCurtainOn)
+		// 		if err != nil {
+		// 			log.Fatal(err)
+		// 		}
+		// 	}
+		// 	isCurtainOn = newIsCurtainOn
+		// })
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 	}()
 
 	<-done

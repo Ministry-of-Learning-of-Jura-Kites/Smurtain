@@ -38,31 +38,31 @@ export class HumidityGraphComponent implements OnInit {
     if (this.isBrowser) {
         this.initializeChart();
 
-        this.brokerService.getData('humidity').then((data) => {
-          // console.log('check ',data)
-            const fiveMinutesInMilliseconds = 5 * 60 * 1000;
-            const currentTime = new Date().getTime();
+        // this.brokerService.getData('humidity').then((data) => {
+        //   // console.log('check ',data)
+        //     const fiveMinutesInMilliseconds = 5 * 60 * 1000;
+        //     const currentTime = new Date().getTime();
 
-            const filteredData = data.filter(
-                (item) => currentTime - item.Time <= fiveMinutesInMilliseconds
-            );
+        //     const filteredData = data.filter(
+        //         (item) => currentTime - item.Time <= fiveMinutesInMilliseconds
+        //     );
 
-            const chartSeriesData = filteredData.map((item) => [
-                item.Time,
-                item.Data,
-            ]);
+        //     const chartSeriesData = filteredData.map((item) => [
+        //         item.Time,
+        //         item.Data,
+        //     ]);
 
-            this.chartOptions.series = [
-                {
-                    name: 'Live Data',
-                    type: 'areaspline',
-                    data: chartSeriesData,
-                },
-            ];
-            this.updateFlag = true;
-        }).catch((err) => {
-            console.error('Error fetching data from IndexedDB:', err);
-        });
+        //     this.chartOptions.series = [
+        //         {
+        //             name: 'Live Data',
+        //             type: 'areaspline',
+        //             data: chartSeriesData,
+        //         },
+        //     ];
+        //     this.updateFlag = true;
+        // }).catch((err) => {
+        //     console.error('Error fetching data from IndexedDB:', err);
+        // });
 
         this.brokerService.humidity.subscribe((value) => {
             this.liveData$.next(value);
