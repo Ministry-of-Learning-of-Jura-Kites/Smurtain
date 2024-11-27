@@ -68,8 +68,6 @@ void setup()
 
     Serial.println(mqttClient.connectError());
 
-    has_encountered_error = true;
-
     delay(5000);
   }
 
@@ -82,11 +80,6 @@ void setup()
 
 void loop()
 {
-  if (has_encountered_error)
-  {
-    return;
-  }
-  mqttClient.poll();
   if (!mqttClient.connected())
   {
     while (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
@@ -95,11 +88,14 @@ void loop()
 
       Serial.println(mqttClient.connectError());
 
-      has_encountered_error = true;
-
       delay(5000);
     }
   }
+  if (has_encountered_error)
+  {
+    return;
+  }
+  mqttClient.poll();
 
   if (sensorSerial.available())
   {
