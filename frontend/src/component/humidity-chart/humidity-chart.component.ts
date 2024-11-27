@@ -45,6 +45,13 @@ export class HumidityChartComponent implements OnInit {
   }
 
   handleUpdate(value: number) {
+    if(value >= 100){
+      value = 100
+    }
+    else if(value <= 0){
+      value = 0
+    }
+    
     this.humidity = value;
     if (this.isBrowser) {
       (this.chartOptions.series![0] as any).data = [value];
@@ -53,6 +60,6 @@ export class HumidityChartComponent implements OnInit {
   }
 
   initializeChart(): void {
-    this.chartOptions = createChartOptions("Humidity",0,40,70,80,100,"°C")
+    this.chartOptions = createChartOptions("Humidity",0,40,70,80,100,"%")
   }
 }

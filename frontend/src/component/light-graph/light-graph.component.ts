@@ -76,6 +76,12 @@ export class LightGraphComponent implements OnInit {
 }
 
 handleUpdate(value: number): void {
+  if(value >= 100){
+    value = 100
+  }
+  else if(value <= 0){
+    value = 0
+  }
     const series = this.chartOptions.series?.[0] as Highcharts.SeriesLineOptions;
     if (series) {
         const currentTime = new Date().getTime();
@@ -121,14 +127,14 @@ handleUpdate(value: number): void {
       },
       yAxis: {
         title: {
-          text: 'Temperature (°C)',
+          text: 'Light (%)',
         },
         min: 0,
-        max: 50,
+        max: 100,
       },
       tooltip: {
         shared: true,
-        valueSuffix: ' °C',
+        valueSuffix: ' %',
         xDateFormat: '%A, %b %e, %Y %H:%M:%S',
         formatter: function (this: Highcharts.TooltipFormatterContextObject) {
           const date = new Date(this.x ?? 0);
@@ -144,7 +150,7 @@ handleUpdate(value: number): void {
   
           return `
             <b>${formattedDate}</b><br>
-            Temperature: <b>${this.y} °C</b>
+            Light: <b>${this.y} %</b>
           `;
         },
       },
@@ -168,6 +174,9 @@ handleUpdate(value: number): void {
           },
           threshold: null,
         },
+      },
+      credits: {
+        enabled: false,
       },
       series: [
         {

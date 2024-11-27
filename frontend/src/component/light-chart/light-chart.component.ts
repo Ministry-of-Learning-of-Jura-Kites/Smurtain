@@ -45,6 +45,12 @@ export class LightChartComponent implements OnInit {
   }
 
   handleUpdate(value: number) {
+    if(value >= 100){
+      value = 100
+    }
+    else if(value <= 0){
+      value = 0
+    }
     this.light = value;
     if (this.isBrowser) {
       (this.chartOptions.series![0] as any).data = [value];
@@ -52,6 +58,6 @@ export class LightChartComponent implements OnInit {
     }
   }
   initializeChart(): void {
-    this.chartOptions = createChartOptions("Light",0,150,300,450,500,"lux")
+    this.chartOptions = createChartOptions("Light",0,40,70,80,100,"%")
   }
 }

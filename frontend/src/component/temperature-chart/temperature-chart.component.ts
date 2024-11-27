@@ -43,6 +43,12 @@ export class TemperatureChartComponent implements OnInit {
   }
 
   handleUpdate(value: number) {
+    if(value >= 50){
+      value = 50
+    }
+    else if(value <= 0){
+      value = 0
+    }
     this.temperature = value;
     if (this.isBrowser) {
       (this.chartOptions.series![0] as any).data = [value];

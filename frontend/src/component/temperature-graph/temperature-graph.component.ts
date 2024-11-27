@@ -76,6 +76,12 @@ export class TemperatureGraphComponent implements OnInit {
 }
 
 handleUpdate(value: number): void {
+  if(value >= 50){
+    value = 50
+  }
+  else if(value <= 0){
+    value = 0
+  }
     const series = this.chartOptions.series?.[0] as Highcharts.SeriesLineOptions;
     if (series) {
         const currentTime = new Date().getTime();
@@ -168,6 +174,9 @@ handleUpdate(value: number): void {
           },
           threshold: null,
         },
+      },
+      credits: {
+        enabled: false,
       },
       series: [
         {
