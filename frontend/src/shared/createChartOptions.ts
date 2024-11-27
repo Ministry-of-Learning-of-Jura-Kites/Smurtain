@@ -44,7 +44,7 @@ export default function createChartOptions(
   level2: number,
   level3: number,
   max: number,
-  unit: String
+  unit: string
 ): Highcharts.Options {
   return {
     ...baseChartOptions,

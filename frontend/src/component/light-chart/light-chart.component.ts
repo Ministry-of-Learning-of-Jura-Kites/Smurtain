@@ -1,13 +1,14 @@
-import { Component, Inject, Input, OnInit, PLATFORM_ID } from '@angular/core';
-import Highcharts, { Options } from 'highcharts';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import More from 'highcharts/highcharts-more'; // For the gauge
 import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsGauge from 'highcharts/modules/solid-gauge';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Subject } from 'rxjs';
+import { CommonModule } from '@angular/common';
 import { BrokerService } from '../../../service/broker.service';
 import createChartOptions from '@src/shared/createChartOptions';
+import {LIGHT_CONFIG} from '@src/shared/config';
+import {BaseChartComponent} from '@src/shared/BaseChartComponent';
 // Initialize the modules
 if (typeof Highcharts === 'object') {
   More(Highcharts);
@@ -20,44 +21,18 @@ if (typeof Highcharts === 'object') {
   standalone: true,
   imports: [HighchartsChartModule, CommonModule],
   templateUrl: './light-chart.component.html',
-  styleUrls: ['./light-chart.component.css','../../styles.css']
+  styleUrls: ['./light-chart.component.css', '../../styles.css']
 })
-export class LightChartComponent implements OnInit {
-  light: number | undefined = undefined;
-  isBrowser: boolean;
-  Highcharts: typeof Highcharts = Highcharts;
-  chart: Highcharts.Chart | undefined;
-  chartOptions: Options = {};
-  updateFlag: boolean = false;
+export class LightChartComponent extends BaseChartComponent implements OnInit {
+  measurementConfig = LIGHT_CONFIG;
 
   constructor(
-    @Inject(PLATFORM_ID) platformId: Object,
-    private brokerService: BrokerService
+    @Inject(PLATFORM_ID) platformId: object,
+     brokerService: BrokerService
   ) {
-    this.isBrowser = isPlatformBrowser(platformId);
-  }
-
-  ngOnInit(): void {
-    if (this.isBrowser) {
-      this.initializeChart();
-      this.brokerService.light.subscribe(this.handleUpdate.bind(this));
-    }
-  }
-
-  handleUpdate(value: number) {
-    if(value >= 100){
-      value = 100
-    }
-    else if(value <= 0){
-      value = 0
-    }
-    this.light = value;
-    if (this.isBrowser) {
-      (this.chartOptions.series![0] as any).data = [value];
-      this.updateFlag = true;
-    }
+    super(platformId,brokerService,brokerService.light)
   }
   initializeChart(): void {
-    this.chartOptions = createChartOptions("Light",0,40,70,80,100,"%")
+    this.chartOptions = createChartOptions(this.measurementConfig.TITLE, this.measurementConfig.MIN, 40, 70, 80, this.measurementConfig.MAX, this.measurementConfig.UNIT);
   }
 }

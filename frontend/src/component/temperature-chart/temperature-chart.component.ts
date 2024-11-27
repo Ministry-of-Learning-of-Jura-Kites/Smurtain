@@ -1,12 +1,14 @@
-import { Component, Inject, Input, OnInit, PLATFORM_ID } from '@angular/core';
-import Highcharts, { Options } from 'highcharts';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import More from 'highcharts/highcharts-more'; // For the gauge
 import HighchartsExporting from 'highcharts/modules/exporting';
 import HighchartsGauge from 'highcharts/modules/solid-gauge';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { BrokerService } from '../../../service/broker.service';
 import createChartOptions from '@src/shared/createChartOptions';
+import {BaseChartComponent} from '@src/shared/BaseChartComponent';
+import {MeasurementConfig, TEMPERATURE_CONFIG} from '@src/shared/config';
 if (typeof Highcharts === 'object') {
   More(Highcharts);
   HighchartsGauge(Highcharts);
@@ -18,45 +20,19 @@ if (typeof Highcharts === 'object') {
   standalone: true,
   imports: [HighchartsChartModule, CommonModule],
   templateUrl: './temperature-chart.component.html',
-  styleUrls: ['./temperature-chart.component.css','../../styles.css'],
+  styleUrls: ['./temperature-chart.component.css', '../../styles.css'],
 })
-export class TemperatureChartComponent implements OnInit {
-  temperature: number | undefined = undefined;
-  isBrowser: boolean;
-  Highcharts: typeof Highcharts = Highcharts;
-  chart: Highcharts.Chart | undefined;
-  chartOptions: Options = {};
-  updateFlag: boolean = false;
+export class TemperatureChartComponent extends BaseChartComponent implements OnInit {
+  override measurementConfig: MeasurementConfig = TEMPERATURE_CONFIG;
 
   constructor(
-    @Inject(PLATFORM_ID) platformId: Object,
-    private brokerService: BrokerService
+    @Inject(PLATFORM_ID) platformId: object,
+     brokerService: BrokerService
   ) {
-    this.isBrowser = isPlatformBrowser(platformId);
-  }
-
-  ngOnInit(): void {
-    if (this.isBrowser) {
-      this.initializeChart();
-      this.brokerService.temperature.subscribe(this.handleUpdate.bind(this));
-    }
-  }
-
-  handleUpdate(value: number) {
-    if(value >= 50){
-      value = 50
-    }
-    else if(value <= 0){
-      value = 0
-    }
-    this.temperature = value;
-    if (this.isBrowser) {
-      (this.chartOptions.series![0] as any).data = [value];
-      this.updateFlag = true;
-    }
+    super(platformId,brokerService,brokerService.light)
   }
 
   initializeChart(): void {
-    this.chartOptions = createChartOptions("Temperature",0,25,35,40,50,"°C")
+    this.chartOptions = createChartOptions(this.measurementConfig.TITLE, this.measurementConfig.MIN, 25, 35, 40, this.measurementConfig.MAX, this.measurementConfig.UNIT);
   }
 }

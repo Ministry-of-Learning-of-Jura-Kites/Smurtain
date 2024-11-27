@@ -8,10 +8,9 @@ describe('HumidityGraphComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HumidityGraphComponent]
-    })
-    .compileComponents();
-    
+      imports: [HumidityGraphComponent],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(HumidityGraphComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
