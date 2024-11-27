@@ -8,6 +8,7 @@ import { TemperatureGraphComponent } from '../component/temperature-graph/temper
 import { LightGraphComponent } from '../component/light-graph/light-graph.component';
 import { HumidityGraphComponent } from '../component/humidity-graph/humidity-graph.component';
 import { MatTabsModule } from '@angular/material/tabs';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   encapsulation: ViewEncapsulation.None,
@@ -23,6 +24,7 @@ import { MatTabsModule } from '@angular/material/tabs';
     LightGraphComponent,
     HumidityGraphComponent,
   ],
+  providers : [HttpClientModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css','app.component.scss'],
 })

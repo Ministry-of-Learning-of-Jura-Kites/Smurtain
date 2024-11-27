@@ -2,7 +2,7 @@ package gmail_service
 
 import (
 	"context"
-	"encoding/base64"
+	// "encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,9 +12,9 @@ import (
 	"runtime"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	// "golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
-	"google.golang.org/api/option"
+	// "google.golang.org/api/option"
 )
 
 var GmailService *gmail.Service
@@ -76,24 +76,24 @@ func saveToken(path string, token *oauth2.Token) {
 }
 
 func init() {
-	ctx := context.Background()
-	b, err := os.ReadFile(filepath.Join(rootpath, "credentials.json"))
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
+	// ctx := context.Background()
+	// b, err := os.ReadFile(filepath.Join(rootpath, "credentials.json"))
+	// if err != nil {
+	// 	log.Fatalf("Unable to read client secret file: %v", err)
+	// }
 
-	config, err := google.ConfigFromJSON(b, gmail.GmailSendScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	client := getClient(config)
+	// config, err := google.ConfigFromJSON(b, gmail.GmailSendScope)
+	// if err != nil {
+	// 	log.Fatalf("Unable to parse client secret file to config: %v", err)
+	// }
+	// client := getClient(config)
 
-	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
-	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
-	}
+	// srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+	// if err != nil {
+	// 	log.Fatalf("Unable to retrieve Gmail client: %v", err)
+	// }
 
-	GmailService = srv
+	// GmailService = srv
 
 	// user := "me"
 	// r, err := srv.Users.Labels.List(user).Do()
@@ -141,30 +141,30 @@ func init() {
 }
 
 func SendEmail(isOn bool) error {
-	to := "chanmetha.promvijitrakarn@gmail.com"
-	var msgString string
-	emailTo := "To: " + to + "\r\n"
-	msgString = emailTo
-	subject := "Subject: Smurtain Update\n"
-	msgString = msgString + subject
-	msgString = msgString + "\n" + "Curtain is now "
-	if isOn {
-		msgString += "on."
-	} else {
-		msgString += "off."
-	}
-	var msg []byte
-	msg = []byte(msgString)
+	// to := "chanmetha.promvijitrakarn@gmail.com"
+	// var msgString string
+	// emailTo := "To: " + to + "\r\n"
+	// msgString = emailTo
+	// subject := "Subject: Smurtain Update\n"
+	// msgString = msgString + subject
+	// msgString = msgString + "\n" + "Curtain is now "
+	// if isOn {
+	// 	msgString += "on."
+	// } else {
+	// 	msgString += "off."
+	// }
+	// var msg []byte
+	// msg = []byte(msgString)
 
-	//Stores the entire message
-	message := gmail.Message{
-		Raw: base64.URLEncoding.EncodeToString([]byte(msg)),
-	}
+	// //Stores the entire message
+	// message := gmail.Message{
+	// 	Raw: base64.URLEncoding.EncodeToString([]byte(msg)),
+	// }
 
-	//"me" sets the sender email address, email that was used to create the crendentials
-	_, err := GmailService.Users.Messages.Send("me", &message).Do()
-	if err != nil {
-		return err
-	}
+	// //"me" sets the sender email address, email that was used to create the crendentials
+	// _, err := GmailService.Users.Messages.Send("me", &message).Do()
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
