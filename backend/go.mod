@@ -33,6 +33,7 @@ require (
 
 require (
 	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/xid v1.4.0 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	google.golang.org/api v0.209.0
