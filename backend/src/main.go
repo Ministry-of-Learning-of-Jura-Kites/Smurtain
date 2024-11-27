@@ -18,6 +18,8 @@ func main() {
 	done := make(chan bool, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	isCurtainOn := false
+
 	go func() {
 		<-sigs
 		done <- true
@@ -33,17 +35,20 @@ func main() {
 	go func() {
 		err := broker.MqttServer.Subscribe("curtain_status", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 			broker.MqttServer.Log.Info("received")
-			var isOn bool
+			var newIsCurtainOn bool
 			message := string(pk.Payload)
 			if message == "on" {
-				isOn = true
+				newIsCurtainOn = true
 			} else if message == "off" {
-				isOn = false
+				newIsCurtainOn = false
 			}
-			err := gmail_service.SendEmail(isOn)
-			if err != nil {
-				log.Fatal(err)
+			if isCurtainOn != newIsCurtainOn {
+				err := gmail_service.SendEmail(newIsCurtainOn)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
+			isCurtainOn = newIsCurtainOn
 		})
 		if err != nil {
 			log.Fatal(err)
