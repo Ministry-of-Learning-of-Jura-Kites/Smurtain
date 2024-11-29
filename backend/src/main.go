@@ -8,6 +8,8 @@ import (
 
 	// "smurtain.com/backend/src/pkg/broker"
 
+	mqtt "github.com/mochi-mqtt/server/v2"
+	"github.com/mochi-mqtt/server/v2/packets"
 	"smurtain.com/backend/src/pkg/broker"
 )
 
@@ -28,6 +30,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		broker.MqttServer.Subscribe("request", 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+			log.Println("Message from request:", string(pk.Payload))
+		})
 	}()
 
 	go func() {

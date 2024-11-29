@@ -36,14 +36,19 @@ func ConnectToMongoDB() {
 	log.Println("Connected to MongoDB")
 }
 
+var count = 0
+
 func SubscribeToTopics(server *mqtt.Server) {
 	err := server.Subscribe("status/#", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		server.Log.Info("received")
 		message := string(pk.Payload)
 		topic := pk.TopicName
 		fmt.Println("Message received:", message, topic)
-
-		insertDataToMongo(topic, message)
+		count++
+		count %= 100
+		if count == 0 {
+			insertDataToMongo(topic, message)
+		}
 
 	})
 	if err != nil {

@@ -29,7 +29,7 @@ export class TemperatureChartComponent extends BaseChartComponent implements OnI
     @Inject(PLATFORM_ID) platformId: object,
      brokerService: BrokerService
   ) {
-    super(platformId,brokerService,brokerService.light)
+    super(platformId,brokerService,brokerService.temperature)
   }
 
   initializeChart(): void {

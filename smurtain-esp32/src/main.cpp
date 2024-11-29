@@ -14,12 +14,17 @@
 #define ULTRASONIC_ECHO_PIN 26
 #define TX_PIN 18
 #define RX_PIN 19
-#define SAMPLING_INTERVAL 1000 // ms
+#define SAMPLING_INTERVAL 4000 // ms
+// #define SAMPLING_INTERVAL 10000000000 // ms
 #define MIN_LIGHT 2000
 #define MAX_LIGHT 4500
 #define MOTOR_SPEED_PIN 15
 #define MOTOR_DIR1_PIN 33
 #define MOTOR_DIR2_PIN 32
+#define BELT_DISTANCE 25 // cm
+#define MOTOR_MAX_VOLTAGE 255
+#define MOTOR_MIN_VOLTAGE 50
+#define ON_ULTRASONIC_DISTANCE 3
 
 enum UltrasonicSensorState
 {
@@ -30,7 +35,17 @@ enum UltrasonicSensorState
   Echo
 };
 
-UltrasonicSensorState ultrasonicSensorState;
+enum CurtainState
+{
+  CurtainOn,
+  TurningOn,
+  CurtainOff,
+  TurningOff
+};
+
+UltrasonicSensorState ultrasonicSensorState = TriggerLow1;
+
+CurtainState curtainState = CurtainState::CurtainOff;
 
 // EspSoftwareSerial::UART gatewaySerial;
 
@@ -62,6 +77,8 @@ void handleGatewayMessage();
 
 void sample();
 
+void moveMotor();
+
 void setup()
 {
   Serial.begin(115200);
@@ -86,10 +103,6 @@ void setup()
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 
   dht.setup(DHT_PIN, DHT_TYPE);
-
-  digitalWrite(MOTOR_DIR1_PIN,LOW);
-  digitalWrite(MOTOR_DIR2_PIN,HIGH);
-  digitalWrite(MOTOR_SPEED_PIN,HIGH);
 }
 
 void loop()
@@ -109,7 +122,7 @@ void sample()
     handleRequest(RequestType::Temperature);
     handleRequest(RequestType::Light);
     handleRequest(RequestType::Humidity);
-    lastSamplingTime=millis();
+    lastSamplingTime = millis();
   }
 }
 
@@ -121,33 +134,26 @@ void handleGatewayMessage()
     return;
   }
   Serial.println("received message: " + String(data));
-  try
-  {
-    int requestTypeInt = data;
-    RequestType requestType = intToRequestType(requestTypeInt);
-    handleRequest(requestType);
-  }
-  catch (const std::invalid_argument &e)
-  {
-    Serial.println("Invalid: " + String(data));
-    return;
-  }
+  int requestTypeInt = data;
+  RequestType requestType = intToRequestType(requestTypeInt);
+  handleRequest(requestType);
 }
 
 void handleRequest(RequestType requestType)
 {
   switch (requestType)
   {
-  case RequestType::On: {
+  case RequestType::On:
+  {
     Serial.println("on");
-    digitalWrite(MOTOR_DIR1_PIN,HIGH);
-    digitalWrite(MOTOR_DIR2_PIN,LOW);
-    analogWrite(MOTOR_SPEED_PIN,255);
+    curtainState = TurningOn;
+    break;
   }
-  case RequestType::Off: {
-    digitalWrite(MOTOR_DIR1_PIN,LOW);
-    digitalWrite(MOTOR_DIR2_PIN,HIGH);
-    digitalWrite(MOTOR_SPEED_PIN,HIGH);
+  case RequestType::Off:
+  {
+    Serial.println("off");
+    curtainState = TurningOff;
+    break;
   }
   case RequestType::Temperature:
   {
@@ -170,7 +176,7 @@ void handleRequest(RequestType requestType)
   case RequestType::Light:
   {
     uint32_t lightRead = analogRead(LIGHT_PIN);
-    float value = ((float)lightRead-MIN_LIGHT)/(MAX_LIGHT-MIN_LIGHT)*100;
+    float value = ((float)lightRead - MIN_LIGHT) / (MAX_LIGHT - MIN_LIGHT) * 100;
     auto ucharArray = floatToUCharArray(value);
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
@@ -180,7 +186,7 @@ void handleRequest(RequestType requestType)
   case RequestType::CurtainStatus:
   {
     gatewaySerial.write(static_cast<uint8_t>(requestType));
-    gatewaySerial.write(isCurtainOn);
+    gatewaySerial.write(curtainState == CurtainOn ? 1 : 0);
     gatewaySerial.write('\n');
     break;
   }
@@ -239,6 +245,49 @@ void distanceUpdate()
     ulong duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH);
     distance = (duration * .0343) / 2;
     ultrasonicSensorState = TriggerLow1;
+    moveMotor();
     break;
+  }
+}
+
+void moveMotor()
+{
+  // Serial.println("distance: " + String(distance));
+  switch (curtainState)
+  {
+  case CurtainState::TurningOn:
+  {
+    if (distance >= ON_ULTRASONIC_DISTANCE)
+    {
+      int analogValue = MOTOR_MIN_VOLTAGE + std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
+      digitalWrite(MOTOR_DIR1_PIN, LOW);
+      digitalWrite(MOTOR_DIR2_PIN, HIGH);
+      analogWrite(MOTOR_SPEED_PIN, analogValue);
+    }
+    else
+    {
+      analogWrite(MOTOR_SPEED_PIN, 0);
+      curtainState = CurtainState::CurtainOn;
+      handleRequest(CurtainStatus);
+    }
+    break;
+  }
+  case CurtainState::TurningOff:
+  {
+    if (distance <= BELT_DISTANCE - 0.5)
+    {
+      int analogValue = MOTOR_MAX_VOLTAGE - std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
+      digitalWrite(MOTOR_DIR1_PIN, HIGH);
+      digitalWrite(MOTOR_DIR2_PIN, LOW);
+      analogWrite(MOTOR_SPEED_PIN, analogValue);
+    }
+    else
+    {
+      analogWrite(MOTOR_SPEED_PIN, 0);
+      curtainState = CurtainState::CurtainOff;
+      handleRequest(CurtainStatus);
+    }
+    break;
+  }
   }
 }
