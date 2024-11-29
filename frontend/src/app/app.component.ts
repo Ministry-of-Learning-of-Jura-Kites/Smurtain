@@ -9,6 +9,7 @@ import { LightGraphComponent } from '../component/light-graph/light-graph.compon
 import { HumidityGraphComponent } from '../component/humidity-graph/humidity-graph.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { HttpClientModule } from '@angular/common/http';
+import {VoiceRecognitionService} from '../../service/voice-recognition.service';
 import { OpenCloseButtonComponent } from '@src/component/open-close-button/open-close-button.component';
 
 @Component({
@@ -32,5 +33,5 @@ import { OpenCloseButtonComponent } from '@src/component/open-close-button/open-
 })
 export class AppComponent {
   title = 'web';
-  constructor(private broker: BrokerService) {}
+  constructor(private broker: BrokerService, private voiceRecognition: VoiceRecognitionService) {}
 }
