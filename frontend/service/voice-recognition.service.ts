@@ -24,14 +24,12 @@ export class VoiceRecognitionService {
       this.recognition.onresult = (event: any) => {
         console.log(event.results)
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcipt)
+          .map((result: any) => result[0].transcript)
           .join('');
         
         this.tempWords = transcript;
         console.log(event.results)
-        // console.log('temp:', this.tempWords);
-        // this.text = `${this.text} ${this.tempWords}`;
-        // this.tempWords = '';
+        console.log('temp:', transcript);
       };
 
       this.recognition.onend = () => {
