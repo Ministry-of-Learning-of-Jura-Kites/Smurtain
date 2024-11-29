@@ -1,9 +1,17 @@
-<input type="checkbox" id="toggle-button-checkbox"
-       [checked]="isChecked"
-       (change)="click()">
-<label class="toggle-button-switch"  
-       for="toggle-button-checkbox"></label>
-<div class="toggle-button-text">
-  <div class="toggle-button-text-on">ON</div>
-  <div class="toggle-button-text-off">OFF</div>
+<div id="button-container">
+  <mat-spinner *ngIf="isLoading"></mat-spinner>
+
+  <div id="button" [ngClass]="{ darker: isLoading }">
+    <input
+      type="checkbox"
+      id="toggle-button-checkbox"
+      [checked]="isChecked"
+      (change)="click()"
+    />
+    <label class="toggle-button-switch" for="toggle-button-checkbox"></label>
+    <div class="toggle-button-text">
+      <div class="toggle-button-text-on">ON</div>
+      <div class="toggle-button-text-off">OFF</div>
+    </div>
+  </div>
 </div>

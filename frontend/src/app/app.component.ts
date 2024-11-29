@@ -9,8 +9,12 @@ import { LightGraphComponent } from '../component/light-graph/light-graph.compon
 import { HumidityGraphComponent } from '../component/humidity-graph/humidity-graph.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { HttpClientModule } from '@angular/common/http';
-import {VoiceRecognitionService} from '../../service/voice-recognition.service';
+import { VoiceRecognitionService } from '../../service/voice-recognition.service';
 import { OpenCloseButtonComponent } from '@src/component/open-close-button/open-close-button.component';
+import { AlertComponent } from '@coreui/angular';
+import {NgIf} from '@angular/common';
+import { cilCheck, cilWarning } from '@coreui/icons';
+import {IconDirective} from '@coreui/icons-angular';
 
 @Component({
   encapsulation: ViewEncapsulation.None,
@@ -25,13 +29,28 @@ import { OpenCloseButtonComponent } from '@src/component/open-close-button/open-
     TemperatureGraphComponent,
     LightGraphComponent,
     HumidityGraphComponent,
-    OpenCloseButtonComponent
+    OpenCloseButtonComponent,
+    AlertComponent,
+    IconDirective,
+    NgIf
   ],
-  providers : [HttpClientModule],
+  providers: [HttpClientModule],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css','app.component.scss'],
+  styleUrls: ['./app.component.css', 'app.component.scss'],
 })
 export class AppComponent {
-  title = 'web';
-  constructor(private broker: BrokerService, private voiceRecognition: VoiceRecognitionService) {}
+  icons = { cilWarning };
+  title = 'smurtain';
+  isAlerting = false;
+  message = ""
+
+  constructor(
+    private broker: BrokerService,
+    private voiceRecognition: VoiceRecognitionService
+  ) {
+    if(!voiceRecognition.isSupported){
+      this.isAlerting=true;
+      this.message="Your browser does not support speech recognition!"
+    }
+  }
 }

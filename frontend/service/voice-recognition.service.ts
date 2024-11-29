@@ -5,6 +5,7 @@ import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
   providedIn: 'root',
 })
 export class VoiceRecognitionService {
+  isSupported = true;
   recognition: any | undefined;
   text = '';
   smutainList = [
@@ -27,12 +28,13 @@ export class VoiceRecognitionService {
 
   constructor(@Inject(PLATFORM_ID) platformId: Object) {
     if (isPlatformBrowser(platformId)) {
+      console.log("constuct")
       // console.log(window.webkitSpeechRecognition)
       if (
         window.SpeechRecognition == undefined &&
         window.webkitSpeechRecognition == undefined
       ) {
-        alert("Your browser doesn't support Speech Recognition");
+        this.isSupported=false;
         return;
       }
       this.recognition = new window.webkitSpeechRecognition();
@@ -61,7 +63,7 @@ export class VoiceRecognitionService {
       };
 
       this.recognition.onend = () => {
-        // console.log('recognition ended');
+        console.log('recognition ended');
         this.recognition!.start();
       };
 

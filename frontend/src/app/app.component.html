@@ -1,5 +1,17 @@
 <router-outlet></router-outlet>
 
+<c-alert *ngIf="isAlerting" color="danger" class="d-flex align-items-center">
+  <svg
+    [cIcon]="icons.cilWarning"
+    class="bi flex-shrink-0 me-2"
+    width="24"
+    height="24"
+    role="img"
+    aria-label="Info:"
+  ></svg>
+  <div [innerHTML]="[message]"></div>
+</c-alert>
+
 <div class="center-button-container">
   <app-open-close-button></app-open-close-button>
 </div>
