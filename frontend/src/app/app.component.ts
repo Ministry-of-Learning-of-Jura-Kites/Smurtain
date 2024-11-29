@@ -9,6 +9,7 @@ import { LightGraphComponent } from '../component/light-graph/light-graph.compon
 import { HumidityGraphComponent } from '../component/humidity-graph/humidity-graph.component';
 import { MatTabsModule } from '@angular/material/tabs';
 import { HttpClientModule } from '@angular/common/http';
+import { OpenCloseButtonComponent } from '@src/component/open-close-button/open-close-button.component';
 
 @Component({
   encapsulation: ViewEncapsulation.None,
@@ -23,6 +24,7 @@ import { HttpClientModule } from '@angular/common/http';
     TemperatureGraphComponent,
     LightGraphComponent,
     HumidityGraphComponent,
+    OpenCloseButtonComponent
   ],
   providers : [HttpClientModule],
   templateUrl: './app.component.html',
