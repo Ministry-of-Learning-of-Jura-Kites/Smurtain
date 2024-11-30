@@ -13,10 +13,17 @@
 #define TEMP_TOPIC "status/temperature"
 #define HUMIDITY_TOPIC "status/humidity"
 #define LIGHT_TOPIC "status/light"
+#define SETTING_LIGHT_STATUS_TOPIC "status/setting_light"
+#define SETTING_TEMPERATURE_STATUS_TOPIC "status/setting_temperature"
+#define SETTING_HUMIDITY_STATUS_TOPIC "status/setting_humidity"
+#define SETTINGS_LIGHT_TOPIC "settings/light"
+#define SETTINGS_TEMPERATURE_TOPIC "settings/temperature"
+#define SETTINGS_HUMIDITY_TOPIC "settings/humidity"
 #define CURTAIN_STATUS_TOPIC "status/curtain_status"
 #define BROKER_INTERVAL 5 // ms
 #define TX_PIN D0
 #define RX_PIN D1
+#define FRAME_SEPERATOR 255
 
 boolean has_encountered_error = false;
 
@@ -76,6 +83,10 @@ void setup()
   mqttClient.onMessage(onMqttMessage);
 
   mqttClient.subscribe(REQUEST_TOPIC);
+
+  mqttClient.subscribe(SETTINGS_LIGHT_TOPIC);
+  mqttClient.subscribe(SETTINGS_HUMIDITY_TOPIC);
+  mqttClient.subscribe(SETTINGS_TEMPERATURE_TOPIC);
 }
 
 void loop()
@@ -105,9 +116,9 @@ void loop()
 
 void handleSensorMessage()
 {
-  sensorSerial.readBytesUntil('\n', buffer, 6);
-  Serial.println("received message from sensor");
+  sensorSerial.readBytesUntil(FRAME_SEPERATOR, buffer, 6);
   int requestTypeInt = (int)buffer[0];
+  Serial.println("received message from sensor: "+String(requestTypeInt));
   RequestType requestType = intToRequestType(requestTypeInt);
   if (requestType == RequestType::None)
   {
@@ -117,26 +128,44 @@ void handleSensorMessage()
   {
   case Temperature:
   {
-    Serial.println("temperature");
+    // Serial.println("temperature");
     sendFloatValue(TEMP_TOPIC);
     break;
   }
   case Humidity:
   {
-    Serial.println("humidity");
+    // Serial.println("humidity");
     sendFloatValue(HUMIDITY_TOPIC);
     break;
   }
   case Light:
   {
-    Serial.println("light");
+    // Serial.println("light");
     sendFloatValue(LIGHT_TOPIC);
     break;
   }
   case CurtainStatus:
   {
-    Serial.println("curtain status");
+    // Serial.println("curtain status");
     sendBooleanValue(CURTAIN_STATUS_TOPIC);
+    break;
+  }
+  case RequestType::SettingLightStatus:
+  {
+    Serial.println("light status");
+    sendBooleanValue(SETTING_LIGHT_STATUS_TOPIC);
+    break;
+  }
+  case RequestType::SettingTemperatureStatus:
+  {
+    Serial.println("temperature status");
+    sendBooleanValue(SETTING_TEMPERATURE_STATUS_TOPIC);
+    break;
+  }
+  case RequestType::SettingHumidityStatus:
+  {
+    Serial.println("humidity status");
+    sendBooleanValue(SETTING_HUMIDITY_STATUS_TOPIC);
     break;
   }
   default:
@@ -199,8 +228,44 @@ void onMqttMessage(int messageSize)
       Serial.print("received from MQTT: ");
       Serial.println(static_cast<uint8_t>(requestType));
       sensorSerial.write(static_cast<uint8_t>(requestType));
-      sensorSerial.write('\n');
+      sensorSerial.write(FRAME_SEPERATOR);
       sensorSerial.flush();
     }
+  }
+
+  if (topic.startsWith("settings"))
+  {
+    uint8_t value;
+    if (message == "on")
+    {
+      value = 1;
+    }
+    else if (message == "off")
+    {
+      value = 0;
+    }
+    else
+    {
+      return;
+    }
+    RequestType requestType;
+    if (topic == "settings/light")
+    {
+      requestType = RequestType::SettingLight;
+    }
+    if (topic == "settings/humidity")
+    {
+      requestType = RequestType::SettingHumidity;
+    }
+    if (topic == "settings/temperature")
+    {
+      requestType = RequestType::SettingTemperature;
+    }
+    Serial.print("received from MQTT: ");
+    Serial.println(message);
+    sensorSerial.write(static_cast<uint8_t>(requestType));
+    sensorSerial.write(value);
+    sensorSerial.write(FRAME_SEPERATOR);
+    sensorSerial.flush();
   }
 }

@@ -23,6 +23,10 @@
 #define MOTOR_MAX_VOLTAGE 120
 #define MOTOR_MIN_VOLTAGE 100
 #define ON_ULTRASONIC_DISTANCE 5.5
+#define HUMIDITY_THRESHOLD 70
+#define LIGHT_THRESHOLD 60
+#define TEMPERATURE_THRESHOLD 35
+#define FRAME_SEPERATOR 255
 
 enum UltrasonicSensorState
 {
@@ -65,7 +69,13 @@ ulong lastSamplingTime = 0;
 
 ulong lastOnTime = 0;
 
+boolean autoTemperatureToggle = false;
+boolean autoHumidityToggle = false;
+boolean autoLightToggle = false;
+
 void handleRequest(RequestType requestType);
+
+void handleRequest(RequestType requestType, uint8_t message);
 
 std::array<unsigned char, 4> floatToUCharArray(float input);
 
@@ -131,17 +141,23 @@ void sample()
   }
 }
 
+uint8_t buffer[3];
+
 void handleGatewayMessage()
 {
-  int data = gatewaySerial.read();
-  if (data == (int)'\n')
-  {
-    return;
-  }
-  Serial.println("received message: " + String(data));
-  int requestTypeInt = data;
+  size_t size = gatewaySerial.readBytesUntil(FRAME_SEPERATOR, buffer, 3);
+  int requestTypeInt = (int)buffer[0];
+  Serial.println("received message: " + String(requestTypeInt));
   RequestType requestType = intToRequestType(requestTypeInt);
-  handleRequest(requestType);
+  if (size == 2)
+  {
+    uint8_t message = buffer[1];
+    handleRequest(requestType, message);
+  }
+  else if (size == 1)
+  {
+    handleRequest(requestType);
+  }
 }
 
 void handleRequest(RequestType requestType)
@@ -150,6 +166,10 @@ void handleRequest(RequestType requestType)
   {
   case RequestType::On:
   {
+    if (curtainState == CurtainState::TurningOff || curtainState == CurtainState::TurningOn)
+    {
+      return;
+    }
     Serial.println("on");
     curtainState = TurningOn;
     lastOnTime = millis();
@@ -157,6 +177,10 @@ void handleRequest(RequestType requestType)
   }
   case RequestType::Off:
   {
+    if (curtainState == CurtainState::TurningOff || curtainState == CurtainState::TurningOn)
+    {
+      return;
+    }
     Serial.println("off");
     curtainState = TurningOff;
     break;
@@ -167,7 +191,11 @@ void handleRequest(RequestType requestType)
     auto ucharArray = floatToUCharArray(value);
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
-    gatewaySerial.write('\n');
+    gatewaySerial.write(FRAME_SEPERATOR);
+    if (autoTemperatureToggle && (value > TEMPERATURE_THRESHOLD))
+    {
+      handleRequest(RequestType::Off);
+    }
     break;
   }
   case RequestType::Humidity:
@@ -176,7 +204,11 @@ void handleRequest(RequestType requestType)
     auto ucharArray = floatToUCharArray(value);
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
-    gatewaySerial.write('\n');
+    gatewaySerial.write(FRAME_SEPERATOR);
+    if (autoHumidityToggle && (value > HUMIDITY_THRESHOLD))
+    {
+      handleRequest(RequestType::Off);
+    }
     break;
   }
   case RequestType::Light:
@@ -186,14 +218,75 @@ void handleRequest(RequestType requestType)
     auto ucharArray = floatToUCharArray(value);
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     printArray<u_char>(gatewaySerial, ucharArray.begin(), 4);
-    gatewaySerial.write('\n');
+    gatewaySerial.write(FRAME_SEPERATOR);
+    if (autoLightToggle && (value > LIGHT_THRESHOLD))
+    {
+      handleRequest(RequestType::Off);
+    }
     break;
   }
   case RequestType::CurtainStatus:
   {
     gatewaySerial.write(static_cast<uint8_t>(requestType));
     gatewaySerial.write(curtainState == CurtainOn ? 1 : 0);
-    gatewaySerial.write('\n');
+    gatewaySerial.write(FRAME_SEPERATOR);
+    break;
+  }
+  case RequestType::SettingLightStatus:
+  {
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    gatewaySerial.write(autoLightToggle ? 1 : 0);
+    gatewaySerial.write(FRAME_SEPERATOR);
+    break;
+  }
+  case RequestType::SettingTemperatureStatus:
+  {
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    gatewaySerial.write(autoTemperatureToggle ? 1 : 0);
+    gatewaySerial.write(FRAME_SEPERATOR);
+    break;
+  }
+  case RequestType::SettingHumidityStatus:
+  {
+    gatewaySerial.write(static_cast<uint8_t>(requestType));
+    gatewaySerial.write(autoHumidityToggle ? 1 : 0);
+    gatewaySerial.write(FRAME_SEPERATOR);
+    break;
+  }
+  }
+}
+
+void handleRequest(RequestType requestType, uint8_t message)
+{
+  if (message > 1)
+  {
+    return;
+  }
+  switch (requestType)
+  {
+  case RequestType::SettingLight:
+  {
+    Serial.println(static_cast<uint8_t>(RequestType::SettingLightStatus));
+    autoLightToggle = (boolean)message;
+    gatewaySerial.write(static_cast<uint8_t>(RequestType::SettingLightStatus));
+    gatewaySerial.write(message);
+    gatewaySerial.write(FRAME_SEPERATOR);
+    break;
+  }
+  case RequestType::SettingTemperature:
+  {
+    autoLightToggle = (boolean)message;
+    gatewaySerial.write(static_cast<uint8_t>(RequestType::SettingLightStatus));
+    gatewaySerial.write(message);
+    gatewaySerial.write(FRAME_SEPERATOR);
+    break;
+  }
+  case RequestType::SettingHumidity:
+  {
+    autoLightToggle = (boolean)message;
+    gatewaySerial.write(static_cast<uint8_t>(RequestType::SettingLightStatus));
+    gatewaySerial.write(message);
+    gatewaySerial.write(FRAME_SEPERATOR);
     break;
   }
   }
@@ -217,7 +310,6 @@ void printArray(Stream &Serial, T *array, size_t size)
 
 void distanceUpdate()
 {
-
   switch (ultrasonicSensorState)
   {
   case TriggerLow1:
@@ -258,11 +350,11 @@ void distanceUpdate()
     digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
     ulong duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH);
     float newDistance = (duration * .0343) / 2;
-    distance = (distance+newDistance)/2;
+    distance = (distance + newDistance) / 2;
     ultrasonicSensorState = TriggerLow1;
     lastUltrasonicTime = millis();
     moveMotor();
-    Serial.println("distance:" + String(distance));
+    // Serial.println("distance:" + String(distance));
     break;
   }
   case EchoWait:
@@ -284,10 +376,10 @@ void moveMotor()
   {
   case CurtainState::TurningOn:
   {
+    Serial.println("turning on");
     if (millis() < lastOnTime + 1500 && distance <= BELT_DISTANCE - 0.5)
     {
       int analogValue = MOTOR_MIN_VOLTAGE + std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
-      Serial.println(analogValue);
       digitalWrite(MOTOR_DIR1_PIN, HIGH);
       digitalWrite(MOTOR_DIR2_PIN, LOW);
       analogWrite(MOTOR_SPEED_PIN, analogValue);
@@ -295,6 +387,7 @@ void moveMotor()
     }
     else
     {
+      Serial.println("on done");
       analogWrite(MOTOR_SPEED_PIN, 0);
       curtainState = CurtainState::CurtainOn;
       handleRequest(CurtainStatus);
@@ -305,6 +398,7 @@ void moveMotor()
   {
     if (distance >= ON_ULTRASONIC_DISTANCE)
     {
+      Serial.println("turning off");
       int analogValue = MOTOR_MAX_VOLTAGE - std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
       digitalWrite(MOTOR_DIR1_PIN, LOW);
       digitalWrite(MOTOR_DIR2_PIN, HIGH);
@@ -313,6 +407,7 @@ void moveMotor()
     }
     else
     {
+      Serial.println("off done");
       analogWrite(MOTOR_SPEED_PIN, 0);
       curtainState = CurtainState::CurtainOff;
       handleRequest(CurtainStatus);

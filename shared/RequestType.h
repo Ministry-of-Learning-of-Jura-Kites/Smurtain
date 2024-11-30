@@ -11,6 +11,12 @@ enum RequestType
   CurtainStatus,
   On,
   Off,
+  SettingLight,
+  SettingTemperature,
+  SettingHumidity,
+  SettingLightStatus,
+  SettingTemperatureStatus,
+  SettingHumidityStatus
 };
 
 RequestType resolveRequestType(String input);

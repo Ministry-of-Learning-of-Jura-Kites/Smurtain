@@ -4,11 +4,11 @@
 
 RequestType resolveRequestType(String input)
 {
-  if (input == "temperature")
+  if (input == "status/temperature")
   {
     return RequestType::Temperature;
   }
-  if (input == "humidity")
+  if (input == "status/humidity")
   {
     return RequestType::Humidity;
   }
@@ -20,28 +20,59 @@ RequestType resolveRequestType(String input)
   {
     return RequestType::Off;
   }
-  if (input == "light")
+  if (input == "status/light")
   {
     return RequestType::Light;
   }
-  if (input == "curtain_status")
+  if (input == "status/curtain_status")
   {
     return RequestType::CurtainStatus;
+  }
+  if (input == "setting/light")
+  {
+    return RequestType::SettingLight;
+  }
+  if (input == "setting/temperature")
+  {
+    return RequestType::SettingTemperature;
+  }
+  if (input == "setting/humidity")
+  {
+    return RequestType::SettingHumidity;
+  }
+  if (input == "status/setting_light")
+  {
+    return RequestType::SettingLightStatus;
+  }
+  if (input == "status/setting_temperature")
+  {
+    return RequestType::SettingTemperatureStatus;
+  }
+  if (input == "status/setting_humidity")
+  {
+    return RequestType::SettingHumidityStatus;
   }
   return RequestType::None;
 }
 
-RequestType intToRequestType(int input){
-  switch (input)
+RequestType intToRequestType(int input)
 {
-    case static_cast<int>(RequestType::Temperature):
-    case static_cast<int>(RequestType::Light):
-    case static_cast<int>(RequestType::Humidity):
-    case static_cast<int>(RequestType::CurtainStatus):
-    case static_cast<int>(RequestType::On):
-    case static_cast<int>(RequestType::Off):
-        return static_cast<RequestType>(input);
-    default:
+  switch (input)
+  {
+  case static_cast<int>(RequestType::Temperature):
+  case static_cast<int>(RequestType::Light):
+  case static_cast<int>(RequestType::Humidity):
+  case static_cast<int>(RequestType::CurtainStatus):
+  case static_cast<int>(RequestType::On):
+  case static_cast<int>(RequestType::Off):
+  case static_cast<int>(RequestType::SettingHumidity):
+  case static_cast<int>(RequestType::SettingLight):
+  case static_cast<int>(RequestType::SettingTemperature):
+  case static_cast<int>(RequestType::SettingHumidityStatus):
+  case static_cast<int>(RequestType::SettingLightStatus):
+  case static_cast<int>(RequestType::SettingTemperatureStatus):
+    return static_cast<RequestType>(input);
+  default:
     return RequestType::None;
-}
+  }
 }

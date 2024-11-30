@@ -35,7 +35,7 @@ export class OpenCloseButtonComponent {
   }
 
   clickToOn(){
-    if(this.isLoading){
+    if(this.isLoading||this.isChecked){
       return;
     }
     this.isChecked = true;
@@ -45,7 +45,7 @@ export class OpenCloseButtonComponent {
   }
 
   clickToOff(){
-    if(this.isLoading){
+    if(this.isLoading||!this.isChecked){
       return;
     }
     this.isChecked = false;

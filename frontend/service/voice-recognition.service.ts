@@ -17,7 +17,9 @@ export class VoiceRecognitionService {
     'summer turn',
     'smilton',
     'smitten',
-    'certain'
+    'certain',
+    'sumatra',
+    'smirting'
   ];
 
   isSmurtainOn(smurtainWord: string) {
