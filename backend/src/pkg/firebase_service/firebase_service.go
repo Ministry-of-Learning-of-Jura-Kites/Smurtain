@@ -18,7 +18,7 @@ var FirebaseApp *firebase.App
 var FirestoreClient *firestore.Client
 
 func ConnectToFirebase() {
-	serviceAccountKeyFile := "/Users/nonthacha/Downloads/smurtain-firebase-adminsdk-so189-2e9b78bd1c.json"
+	serviceAccountKeyFile := ""
 
 	ctx := context.Background()
 	opt := option.WithCredentialsFile(serviceAccountKeyFile)
