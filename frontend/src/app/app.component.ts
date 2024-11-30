@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, ViewChild, ViewEncapsulation } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TemperatureChartComponent } from '@src/component/temperature-chart/temperature-chart.component';
 import { BrokerService } from '../../service/broker.service';
@@ -39,6 +39,9 @@ import {IconDirective} from '@coreui/icons-angular';
   styleUrls: ['./app.component.css', 'app.component.scss'],
 })
 export class AppComponent {
+  @ViewChild(OpenCloseButtonComponent)
+  openCloseButtonComponent!: OpenCloseButtonComponent;
+
   icons = { cilWarning };
   title = 'smurtain';
   isAlerting = false;
@@ -51,6 +54,16 @@ export class AppComponent {
     if(!voiceRecognition.isSupported){
       this.isAlerting=true;
       this.message="Your browser does not support speech recognition!"
+    }
+    else{
+      voiceRecognition.commandSubject.subscribe((event)=>{
+        if(event=="on"){
+          this.openCloseButtonComponent.clickToOn()
+        }
+        else if(event=="off"){
+          this.openCloseButtonComponent.clickToOff()
+        }
+      })
     }
   }
 }

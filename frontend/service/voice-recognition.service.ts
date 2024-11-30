@@ -1,11 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import {Observable, Subject} from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class VoiceRecognitionService {
   isSupported = true;
+  commandSubject: Subject<CommandEvent> = new Subject();
   recognition: any | undefined;
   text = '';
   smutainList = [
@@ -51,9 +53,11 @@ export class VoiceRecognitionService {
         console.log('text:', this.text);
         if (this.smutainList.some(this.isSmurtainOn.bind(this))) {
           console.log('on!');
+          this.commandSubject.next('on');
           this.text = '';
         } else if (this.smutainList.some(this.isSmurtainOff.bind(this))) {
           console.log('off!');
+          this.commandSubject.next('off');
           this.text = '';
         } else if (this.text.length > 50) {
           let splitted = this.text.split(' ');
@@ -71,3 +75,5 @@ export class VoiceRecognitionService {
     }
   }
 }
+
+type CommandEvent = "on"|"off"

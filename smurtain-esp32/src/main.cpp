@@ -12,8 +12,6 @@
 #define DHT_TYPE DHTesp::DHT11
 #define ULTRASONIC_TRIG_PIN 27
 #define ULTRASONIC_ECHO_PIN 26
-#define TX_PIN 18
-#define RX_PIN 19
 #define SAMPLING_INTERVAL 4000 // ms
 // #define SAMPLING_INTERVAL 10000000000 // ms
 #define MIN_LIGHT 2000
@@ -21,10 +19,10 @@
 #define MOTOR_SPEED_PIN 15
 #define MOTOR_DIR1_PIN 33
 #define MOTOR_DIR2_PIN 32
-#define BELT_DISTANCE 25 // cm
-#define MOTOR_MAX_VOLTAGE 255
-#define MOTOR_MIN_VOLTAGE 50
-#define ON_ULTRASONIC_DISTANCE 3
+#define BELT_DISTANCE 20 // cm
+#define MOTOR_MAX_VOLTAGE 120
+#define MOTOR_MIN_VOLTAGE 100
+#define ON_ULTRASONIC_DISTANCE 5.5
 
 enum UltrasonicSensorState
 {
@@ -32,7 +30,8 @@ enum UltrasonicSensorState
   TriggerWait1,
   TriggerHigh,
   TriggerWait2,
-  Echo
+  Echo,
+  EchoWait
 };
 
 enum CurtainState
@@ -63,6 +62,8 @@ DHTesp dht;
 boolean isCurtainOn = false;
 
 ulong lastSamplingTime = 0;
+
+ulong lastOnTime = 0;
 
 void handleRequest(RequestType requestType);
 
@@ -103,6 +104,10 @@ void setup()
   pinMode(ULTRASONIC_ECHO_PIN, INPUT);
 
   dht.setup(DHT_PIN, DHT_TYPE);
+
+  // digitalWrite(MOTOR_DIR1_PIN, LOW);
+  // digitalWrite(MOTOR_DIR2_PIN, HIGH);
+  // analogWrite(MOTOR_SPEED_PIN, 150);
 }
 
 void loop()
@@ -147,6 +152,7 @@ void handleRequest(RequestType requestType)
   {
     Serial.println("on");
     curtainState = TurningOn;
+    lastOnTime = millis();
     break;
   }
   case RequestType::Off:
@@ -215,38 +221,59 @@ void distanceUpdate()
   switch (ultrasonicSensorState)
   {
   case TriggerLow1:
+  {
     digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
     ultrasonicSensorState = TriggerWait1;
     break;
+  }
 
   case TriggerWait1:
+  {
     if (millis() >= 2 + lastUltrasonicTime)
     {
       ultrasonicSensorState = TriggerHigh;
       lastUltrasonicTime = millis();
     }
     break;
+  }
 
   case TriggerHigh:
+  {
     digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
     ultrasonicSensorState = TriggerWait2;
     break;
+  }
 
   case TriggerWait2:
+  {
     if (millis() >= 10 + lastUltrasonicTime)
     {
       ultrasonicSensorState = Echo;
       lastUltrasonicTime = millis();
     }
     break;
-
+  }
   case Echo:
+  {
     digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
     ulong duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH);
-    distance = (duration * .0343) / 2;
+    float newDistance = (duration * .0343) / 2;
+    distance = (distance+newDistance)/2;
     ultrasonicSensorState = TriggerLow1;
+    lastUltrasonicTime = millis();
     moveMotor();
+    Serial.println("distance:" + String(distance));
     break;
+  }
+  case EchoWait:
+  {
+    if (millis() >= 100 + lastUltrasonicTime)
+    {
+      ultrasonicSensorState = TriggerLow1;
+      lastUltrasonicTime = millis();
+    }
+    break;
+  }
   }
 }
 
@@ -257,12 +284,14 @@ void moveMotor()
   {
   case CurtainState::TurningOn:
   {
-    if (distance >= ON_ULTRASONIC_DISTANCE)
+    if (millis() < lastOnTime + 1500 && distance <= BELT_DISTANCE - 0.5)
     {
       int analogValue = MOTOR_MIN_VOLTAGE + std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
-      digitalWrite(MOTOR_DIR1_PIN, LOW);
-      digitalWrite(MOTOR_DIR2_PIN, HIGH);
+      Serial.println(analogValue);
+      digitalWrite(MOTOR_DIR1_PIN, HIGH);
+      digitalWrite(MOTOR_DIR2_PIN, LOW);
       analogWrite(MOTOR_SPEED_PIN, analogValue);
+      // analogWrite(MOTOR_SPEED_PIN, 150);
     }
     else
     {
@@ -274,12 +303,13 @@ void moveMotor()
   }
   case CurtainState::TurningOff:
   {
-    if (distance <= BELT_DISTANCE - 0.5)
+    if (distance >= ON_ULTRASONIC_DISTANCE)
     {
       int analogValue = MOTOR_MAX_VOLTAGE - std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
-      digitalWrite(MOTOR_DIR1_PIN, HIGH);
-      digitalWrite(MOTOR_DIR2_PIN, LOW);
+      digitalWrite(MOTOR_DIR1_PIN, LOW);
+      digitalWrite(MOTOR_DIR2_PIN, HIGH);
       analogWrite(MOTOR_SPEED_PIN, analogValue);
+      // analogWrite(MOTOR_SPEED_PIN, 150);
     }
     else
     {

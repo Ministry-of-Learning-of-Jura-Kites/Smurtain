@@ -29,13 +29,36 @@ export class OpenCloseButtonComponent {
       return;
     }
     this.isChecked = !this.isChecked;
-    let message;
-    if (this.isChecked) {
-      message = 'on';
-    } else {
-      message = 'off';
-    }
+    let message = this.isCheckedToMessage()
     this.brokerService.client?.publish(REQUEST_TOPIC, message);
     this.isLoading = true;
+  }
+
+  clickToOn(){
+    if(this.isLoading){
+      return;
+    }
+    this.isChecked = true;
+    let message = this.isCheckedToMessage();
+    this.brokerService.client?.publish(REQUEST_TOPIC, message);
+    this.isLoading = true;
+  }
+
+  clickToOff(){
+    if(this.isLoading){
+      return;
+    }
+    this.isChecked = false;
+    let message = this.isCheckedToMessage();
+    this.brokerService.client?.publish(REQUEST_TOPIC, message);
+    this.isLoading = true;
+  }
+
+  isCheckedToMessage(): string{
+    if (this.isChecked) {
+      return 'on';
+    } else {
+      return 'off';
+    }
   }
 }
