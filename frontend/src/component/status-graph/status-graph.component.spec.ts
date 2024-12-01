@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LightChartComponent } from './light-chart.component';
+import { StatusGraphComponent } from './status-graph.component';
 
-describe('LightDetectionComponent', () => {
-  let component: LightChartComponent;
-  let fixture: ComponentFixture<LightChartComponent>;
+describe('StatusGraphComponent', () => {
+  let component: StatusGraphComponent;
+  let fixture: ComponentFixture<StatusGraphComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LightChartComponent]
+      imports: [StatusGraphComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(LightChartComponent);
+    fixture = TestBed.createComponent(StatusGraphComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

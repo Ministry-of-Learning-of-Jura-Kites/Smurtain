@@ -1,64 +1,77 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { BrokerService } from '../../../service/broker.service';
 import { CURTAIN_STATUS_TOPIC, REQUEST_TOPIC } from '@src/shared/topicNames';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import {CommonModule, NgClass, NgIf} from '@angular/common';
+import { CommonModule, NgClass, NgIf } from '@angular/common';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-open-close-button',
   standalone: true,
-  imports: [MatProgressSpinnerModule,NgClass,NgIf],
+  imports: [MatProgressSpinnerModule, NgClass, NgIf],
   templateUrl: './open-close-button.component.html',
   styleUrl: './open-close-button.component.css',
 })
-export class OpenCloseButtonComponent {
+export class OpenCloseButtonComponent implements OnInit {
+  // only subject of boolean
+  @Input() brokerServiceKey:
+    | {
+        [K in keyof BrokerService['subjects']]: BrokerService['subjects'][K] extends Subject<boolean>
+          ? K
+          : never;
+      }[keyof BrokerService['subjects']]
+    | undefined;
+  @Input() onClickTopic: string | undefined;
+  @Input() requestMessage: string | undefined;
   isChecked = false;
   isLoading = true;
 
-  constructor(private brokerService: BrokerService) {
-    brokerService.curtainStatus.subscribe((newValue) => {
-      this.isLoading = false;
-      this.isChecked = newValue;
-    });
-    this.brokerService.client?.publish(REQUEST_TOPIC, 'curtain_status');
+  constructor(public brokerService: BrokerService) {
+    // this.brokerService.client?.publish(REQUEST_TOPIC, 'curtain_status');
     this.isLoading = true;
+  }
+
+  ngOnInit(): void {
+    // this.onInit();
+    this.brokerService.subjects[this.brokerServiceKey!]!.subscribe(
+      (newValue: boolean) => {
+        this.isLoading = false;
+        this.isChecked = newValue;
+      }
+    );
+    this.brokerService.client?.publish(REQUEST_TOPIC, this.requestMessage!);
   }
 
   click() {
-    if(this.isLoading){
+    if (this.isLoading) {
       return;
     }
     this.isChecked = !this.isChecked;
-    let message = this.isCheckedToMessage()
-    this.brokerService.client?.publish(REQUEST_TOPIC, message);
+    if (this.isChecked) {
+      this.clickToOn();
+    } else {
+      this.clickToOff();
+    }
+    // let message = this.isCheckedToMessage()
+    // this.brokerService.client?.publish(REQUEST_TOPIC, message);
     this.isLoading = true;
   }
 
-  clickToOn(){
-    if(this.isLoading||this.isChecked){
+  clickToOn() {
+    if (this.isLoading || this.isChecked) {
       return;
     }
     this.isChecked = true;
-    let message = this.isCheckedToMessage();
-    this.brokerService.client?.publish(REQUEST_TOPIC, message);
+    this.brokerService.client?.publish(REQUEST_TOPIC, 'on');
     this.isLoading = true;
   }
 
-  clickToOff(){
-    if(this.isLoading||!this.isChecked){
+  clickToOff() {
+    if (this.isLoading || !this.isChecked) {
       return;
     }
     this.isChecked = false;
-    let message = this.isCheckedToMessage();
-    this.brokerService.client?.publish(REQUEST_TOPIC, message);
+    this.brokerService.client?.publish(REQUEST_TOPIC, 'off');
     this.isLoading = true;
-  }
-
-  isCheckedToMessage(): string{
-    if (this.isChecked) {
-      return 'on';
-    } else {
-      return 'off';
-    }
   }
 }

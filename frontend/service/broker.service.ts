@@ -26,11 +26,15 @@ export const MQTT_OPTIONS: mqtt.IClientOptions = {
 export class BrokerService {
   public client: mqtt.MqttClient | undefined;
 
-  // Subjects to expose the latest value
-  temperature: Subject<number> = new Subject();
-  light: Subject<number> = new Subject();
-  humidity: Subject<number> = new Subject();
-  curtainStatus: Subject<boolean> = new Subject();
+  public subjects  = {
+    temperature: new Subject<number>(),
+    light: new Subject<number>(),
+    humidity: new Subject<number>(),
+    curtainStatus: new Subject<boolean>()
+  }
+
+  // public booleanSubjects : Subject<boolean> = {
+  // }
 
   constructor(@Inject(PLATFORM_ID) private platformId: InjectionToken<Object>) {
     if (isPlatformBrowser(platformId)) {
@@ -47,16 +51,16 @@ export class BrokerService {
         let messageString: string = message.toString();
         switch (topic) {
           case TEMPERATURE_TOPIC:
-            this.temperature.next(parseFloat(messageString));
+            this.subjects.temperature.next(parseFloat(messageString));
             break;
           case LIGHT_TOPIC:
-            this.light.next(parseFloat(messageString));
+            this.subjects.light.next(parseFloat(messageString));
             break;
           case HUMIDITY_TOPIC:
-            this.humidity.next(parseFloat(messageString));
+            this.subjects.humidity.next(parseFloat(messageString));
             break;
           case CURTAIN_STATUS_TOPIC:
-            this.curtainStatus.next(messageString == 'on');
+            this.subjects.curtainStatus.next(messageString == 'on');
             break;
         }
       });

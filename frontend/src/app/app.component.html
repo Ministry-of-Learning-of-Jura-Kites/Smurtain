@@ -13,24 +13,36 @@
 </c-alert>
 
 <div class="center-button-container">
-  <app-open-close-button></app-open-close-button>
+  <app-open-close-button
+    [requestMessage]="'status/setting_light'"
+    [onClickTopic]="REQUEST_TOPIC"
+    [brokerServiceKey]="'curtainStatus'"
+  ></app-open-close-button>
 </div>
 
 <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="center">
   <mat-tab label="Charts">
     <div class="chart-parent">
-      <app-temperature-chart
+      <app-status-chart
         style="grid-column: 1; grid-row: 1"
-      ></app-temperature-chart>
-      <app-light-chart style="grid-column: 2; grid-row: 1"></app-light-chart>
-      <app-humidity-chart
+        [measurementConfig]="TEMPERATURE_CONFIG"
+        [subject]="broker.subjects.temperature"
+      ></app-status-chart>
+      <app-status-chart
+        style="grid-column: 2; grid-row: 1"
+        [measurementConfig]="LIGHT_CONFIG"
+        [subject]="broker.subjects.light"
+      ></app-status-chart>
+      <app-status-chart
         style="grid-column: 3; grid-row: 1"
-      ></app-humidity-chart>
+        [measurementConfig]="HUMIDITY_CONFIG"
+        [subject]="broker.subjects.humidity"
+      ></app-status-chart>
     </div>
   </mat-tab>
   <mat-tab label="Graphs" color="black">
-    <app-temperature-graph></app-temperature-graph>
-    <app-light-graph></app-light-graph>
-    <app-humidity-graph></app-humidity-graph>
+    <app-status-graph [measurementConfig]="LIGHT_CONFIG" [subject]="broker.subjects.light"></app-status-graph>
+    <app-status-graph [measurementConfig]="TEMPERATURE_CONFIG" [subject]="broker.subjects.temperature"></app-status-graph>
+    <app-status-graph [measurementConfig]="HUMIDITY_CONFIG" [subject]="broker.subjects.humidity"></app-status-graph>
   </mat-tab>
 </mat-tab-group>
