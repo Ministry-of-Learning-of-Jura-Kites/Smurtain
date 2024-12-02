@@ -358,7 +358,7 @@ void distanceUpdate()
   }
   case EchoWait:
   {
-    if (millis() >= 10 + lastUltrasonicTime)
+    if (millis() >= 100 + lastUltrasonicTime)
     {
       ultrasonicSensorState = TriggerLow1;
       lastUltrasonicTime = millis();
@@ -381,7 +381,7 @@ void moveMotor()
       int analogValue = MOTOR_MIN_VOLTAGE + std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
       digitalWrite(MOTOR_DIR1_PIN, HIGH);
       digitalWrite(MOTOR_DIR2_PIN, LOW);
-      analogWrite(MOTOR_SPEED_PIN, analogValue);
+      analogWrite(MOTOR_SPEED_PIN, 120);
       // analogWrite(MOTOR_SPEED_PIN, 150);
     }
     else
@@ -401,7 +401,7 @@ void moveMotor()
       int analogValue = MOTOR_MAX_VOLTAGE - std::min(1.0, std::max(0.0, (distance - ON_ULTRASONIC_DISTANCE) / BELT_DISTANCE)) * (MOTOR_MAX_VOLTAGE - MOTOR_MIN_VOLTAGE);
       digitalWrite(MOTOR_DIR1_PIN, LOW);
       digitalWrite(MOTOR_DIR2_PIN, HIGH);
-      analogWrite(MOTOR_SPEED_PIN, analogValue);
+      analogWrite(MOTOR_SPEED_PIN, 120);
       // analogWrite(MOTOR_SPEED_PIN, 150);
     }
     else

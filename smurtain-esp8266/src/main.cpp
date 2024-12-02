@@ -80,6 +80,7 @@ void loop()
 {
   if (!mqttClient.connected())
   {
+    setupMqtt();
   }
   if (has_encountered_error)
   {

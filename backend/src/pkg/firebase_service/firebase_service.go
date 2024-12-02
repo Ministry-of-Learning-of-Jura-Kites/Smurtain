@@ -2,7 +2,6 @@ package firebase_service
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"path"
 	"time"
@@ -41,7 +40,9 @@ func SubscribeToTopics(server *mqtt.Server) {
 	err := server.Subscribe("status/#", 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		message := string(pk.Payload)
 		topic := pk.TopicName
-		insertDataToFirestore(topic, message)
+		go func() {
+			insertDataToFirestore(topic, message)
+		}()
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -65,44 +66,44 @@ func insertDataToFirestore(topic string, message string) {
 	}
 }
 
-func GetDataFirestoreUsingMQTT(server *mqtt.Server) {
-	requestTopic := "data/record/request"
-	responseTopic := "data/record/response"
+// func GetDataFirestoreUsingMQTT(server *mqtt.Server) {
+// 	requestTopic := "data/record/request"
+// 	responseTopic := "data/record/response"
 
-	err := server.Subscribe(requestTopic, 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
-		go func() {
-			server.Log.Info("Data request received")
+// 	err := server.Subscribe(requestTopic, 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+// 		go func() {
+// 			server.Log.Info("Data request received")
 
-			ctx := context.Background()
-			fiveMinutesAgo := time.Now().Add(-5 * time.Minute)
+// 			ctx := context.Background()
+// 			fiveMinutesAgo := time.Now().Add(-5 * time.Minute)
 
-			iter := FirestoreClient.Collection("smurtain").Where("timestamp", ">=", fiveMinutesAgo).Documents(ctx)
+// 			iter := FirestoreClient.Collection("smurtain").Where("timestamp", ">=", fiveMinutesAgo).Documents(ctx)
 
-			var results []map[string]interface{}
-			for {
-				doc, err := iter.Next()
-				if err != nil {
-					break
-				}
-				results = append(results, doc.Data())
-			}
+// 			var results []map[string]interface{}
+// 			for {
+// 				doc, err := iter.Next()
+// 				if err != nil {
+// 					break
+// 				}
+// 				results = append(results, doc.Data())
+// 			}
 
-			responsePayload, err := json.Marshal(results)
-			if err != nil {
-				log.Printf("Error marshalling results: %v\n", err)
-				return
-			}
+// 			responsePayload, err := json.Marshal(results)
+// 			if err != nil {
+// 				log.Printf("Error marshalling results: %v\n", err)
+// 				return
+// 			}
 
-			err = server.Publish(responseTopic, responsePayload, false, 1)
-			if err != nil {
-				log.Printf("Failed to publish response: %v\n", err)
-			} else {
-				log.Println("Query results successfully published to response topic")
-			}
-		}()
-	})
+// 			err = server.Publish(responseTopic, responsePayload, false, 1)
+// 			if err != nil {
+// 				log.Printf("Failed to publish response: %v\n", err)
+// 			} else {
+// 				log.Println("Query results successfully published to response topic")
+// 			}
+// 		}()
+// 	})
 
-	if err != nil {
-		log.Fatalf("Failed to subscribe to request topic: %v\n", err)
-	}
-}
+// 	if err != nil {
+// 		log.Fatalf("Failed to subscribe to request topic: %v\n", err)
+// 	}
+// }
