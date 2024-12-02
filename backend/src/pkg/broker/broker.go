@@ -7,6 +7,7 @@ import (
 	"github.com/mochi-mqtt/server/v2/hooks/auth"
 	"github.com/mochi-mqtt/server/v2/listeners"
 	"smurtain.com/backend/src/pkg/firebase_service"
+	"smurtain.com/backend/src/pkg/gmail_service"
 	"smurtain.com/backend/src/pkg/mongo_service"
 )
 
@@ -35,4 +36,5 @@ func init() {
 	firebase_service.ConnectToFirebase()
 	firebase_service.SubscribeToTopics(MqttServer)
 	firebase_service.GetDataFirestoreUsingMQTT(MqttServer)
+	gmail_service.SubscribeToTopics(MqttServer)
 }

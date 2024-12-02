@@ -52,13 +52,11 @@ export class OpenCloseButtonComponent implements OnInit {
     } else {
       this.clickToOff();
     }
-    // let message = this.isCheckedToMessage()
-    // this.brokerService.client?.publish(REQUEST_TOPIC, message);
     this.isLoading = true;
   }
 
   clickToOn() {
-    if (this.isLoading || this.isChecked) {
+    if (this.isLoading || !this.isChecked) {
       return;
     }
     this.isChecked = true;
@@ -67,7 +65,7 @@ export class OpenCloseButtonComponent implements OnInit {
   }
 
   clickToOff() {
-    if (this.isLoading || !this.isChecked) {
+    if (this.isLoading || this.isChecked) {
       return;
     }
     this.isChecked = false;

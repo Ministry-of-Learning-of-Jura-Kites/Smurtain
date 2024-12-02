@@ -3,8 +3,8 @@ package firebase_service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
+	"path"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -12,14 +12,15 @@ import (
 	mqtt "github.com/mochi-mqtt/server/v2"
 	"github.com/mochi-mqtt/server/v2/packets"
 	"google.golang.org/api/option"
+	"smurtain.com/backend/src/pkg/gmail_service"
 )
 
 var FirebaseApp *firebase.App
 var FirestoreClient *firestore.Client
 
 func ConnectToFirebase() {
-	serviceAccountKeyFile := ""
-
+	log.Println("connecting to firebase...")
+	serviceAccountKeyFile := path.Join(gmail_service.Rootpath, "firebase.json")
 	ctx := context.Background()
 	opt := option.WithCredentialsFile(serviceAccountKeyFile)
 	app, err := firebase.NewApp(ctx, nil, opt)
@@ -37,11 +38,9 @@ func ConnectToFirebase() {
 }
 
 func SubscribeToTopics(server *mqtt.Server) {
-	err := server.Subscribe("status/#", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+	err := server.Subscribe("status/#", 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		message := string(pk.Payload)
 		topic := pk.TopicName
-		fmt.Println("Message received:", message, topic)
-
 		insertDataToFirestore(topic, message)
 	})
 	if err != nil {
@@ -70,7 +69,7 @@ func GetDataFirestoreUsingMQTT(server *mqtt.Server) {
 	requestTopic := "data/record/request"
 	responseTopic := "data/record/response"
 
-	err := server.Subscribe(requestTopic, 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
+	err := server.Subscribe(requestTopic, 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		server.Log.Info("Data request received")
 
 		ctx := context.Background()

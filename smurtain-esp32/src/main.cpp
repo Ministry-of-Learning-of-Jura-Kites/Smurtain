@@ -359,7 +359,7 @@ void distanceUpdate()
   }
   case EchoWait:
   {
-    if (millis() >= 100 + lastUltrasonicTime)
+    if (millis() >= 10 + lastUltrasonicTime)
     {
       ultrasonicSensorState = TriggerLow1;
       lastUltrasonicTime = millis();

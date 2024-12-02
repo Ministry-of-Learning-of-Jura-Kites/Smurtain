@@ -17,7 +17,7 @@ import (
 var MongoClient *mongo.Client
 
 func ConnectToMongoDB() {
-
+	log.Println("connecting to mongo...")
 	mongoURI := "mongodb+srv://sirawitv:Smurtain@smurtain.fjgsc.mongodb.net/"
 	clientOptions := options.Client().ApplyURI(mongoURI)
 
@@ -36,20 +36,11 @@ func ConnectToMongoDB() {
 	log.Println("Connected to MongoDB")
 }
 
-var count = 0
-
 func SubscribeToTopics(server *mqtt.Server) {
-	err := server.Subscribe("status/#", 1, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
-		server.Log.Info("received")
+	err := server.Subscribe("status/#", 3, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
 		message := string(pk.Payload)
 		topic := pk.TopicName
-		fmt.Println("Message received:", message, topic)
-		count++
-		count %= 100
-		if count == 0 {
-			insertDataToMongo(topic, message)
-		}
-
+		insertDataToMongo(topic, message)
 	})
 	if err != nil {
 		log.Fatal(err)
