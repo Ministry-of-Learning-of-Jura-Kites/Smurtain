@@ -4,11 +4,11 @@
   <div id="button" [ngClass]="{ darker: isLoading }">
     <input
       type="checkbox"
-      id="toggle-button-checkbox"
-      [checked]="isChecked"
-      (change)="click()"
+      [id]="topicWhenClick"
+      [(ngModel)]="isChecked"
+      (change)="onclick()"
     />
-    <label class="toggle-button-switch" for="toggle-button-checkbox"></label>
+    <label class="toggle-button-switch" [for]="topicWhenClick"></label>
     <div class="toggle-button-text">
       <div class="toggle-button-text-on">ON</div>
       <div class="toggle-button-text-off">OFF</div>

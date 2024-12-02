@@ -70,34 +70,36 @@ func GetDataFirestoreUsingMQTT(server *mqtt.Server) {
 	responseTopic := "data/record/response"
 
 	err := server.Subscribe(requestTopic, 2, func(cl *mqtt.Client, sub packets.Subscription, pk packets.Packet) {
-		server.Log.Info("Data request received")
+		go func() {
+			server.Log.Info("Data request received")
 
-		ctx := context.Background()
-		fiveMinutesAgo := time.Now().Add(-5 * time.Minute)
+			ctx := context.Background()
+			fiveMinutesAgo := time.Now().Add(-5 * time.Minute)
 
-		iter := FirestoreClient.Collection("smurtain").Where("timestamp", ">=", fiveMinutesAgo).Documents(ctx)
+			iter := FirestoreClient.Collection("smurtain").Where("timestamp", ">=", fiveMinutesAgo).Documents(ctx)
 
-		var results []map[string]interface{}
-		for {
-			doc, err := iter.Next()
-			if err != nil {
-				break
+			var results []map[string]interface{}
+			for {
+				doc, err := iter.Next()
+				if err != nil {
+					break
+				}
+				results = append(results, doc.Data())
 			}
-			results = append(results, doc.Data())
-		}
 
-		responsePayload, err := json.Marshal(results)
-		if err != nil {
-			log.Printf("Error marshalling results: %v\n", err)
-			return
-		}
+			responsePayload, err := json.Marshal(results)
+			if err != nil {
+				log.Printf("Error marshalling results: %v\n", err)
+				return
+			}
 
-		err = server.Publish(responseTopic, responsePayload, false, 1)
-		if err != nil {
-			log.Printf("Failed to publish response: %v\n", err)
-		} else {
-			log.Println("Query results successfully published to response topic")
-		}
+			err = server.Publish(responseTopic, responsePayload, false, 1)
+			if err != nil {
+				log.Printf("Failed to publish response: %v\n", err)
+			} else {
+				log.Println("Query results successfully published to response topic")
+			}
+		}()
 	})
 
 	if err != nil {

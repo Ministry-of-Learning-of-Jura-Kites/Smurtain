@@ -50,9 +50,9 @@ UltrasonicSensorState ultrasonicSensorState = TriggerLow1;
 
 CurtainState curtainState = CurtainState::CurtainOff;
 
-// EspSoftwareSerial::UART gatewaySerial;
+EspSoftwareSerial::UART gatewaySerial;
 
-#define gatewaySerial Serial2
+// #define gatewaySerial Serial2
 
 #define RXD2 16
 #define TXD2 17
@@ -97,9 +97,9 @@ void setup()
   while (!Serial)
     ;
 
-  gatewaySerial.begin(9600, SerialConfig::SERIAL_8O1, RXD2, TXD2);
+  // gatewaySerial.begin(9600, SerialConfig::SERIAL_8O1, RXD2, TXD2);
 
-  // gatewaySerial.begin(9600, EspSoftwareSerial::Config::SWSERIAL_8O1,RX_PIN);
+  gatewaySerial.begin(9600, EspSoftwareSerial::Config::SWSERIAL_8O1, RXD2, TXD2);
 
   while (!gatewaySerial)
     ;
@@ -147,7 +147,7 @@ void handleGatewayMessage()
 {
   size_t size = gatewaySerial.readBytesUntil(FRAME_SEPERATOR, buffer, 3);
   int requestTypeInt = (int)buffer[0];
-  Serial.println("received message: " + String(requestTypeInt));
+  Serial.println("received message: " + String(requestTypeInt) + " size: " + String(size));
   RequestType requestType = intToRequestType(requestTypeInt);
   if (size == 2)
   {
@@ -354,7 +354,6 @@ void distanceUpdate()
     ultrasonicSensorState = TriggerLow1;
     lastUltrasonicTime = millis();
     moveMotor();
-    // Serial.println("distance:" + String(distance));
     break;
   }
   case EchoWait:

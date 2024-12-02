@@ -16,3 +16,16 @@
   background: transparent;
   margin-bottom: 20px;
 }
+
+.setting-button-parent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9;
+  margin-top: 10px;
+}
+
+.setting-text{
+  text-align: center;
+}

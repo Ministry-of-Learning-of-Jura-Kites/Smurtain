@@ -14,9 +14,10 @@
 
 <div class="center-button-container">
   <app-open-close-button
-    [requestMessage]="'status/curtain_status'"
-    [onClickTopic]="REQUEST_TOPIC"
-    [brokerServiceKey]="'curtainStatus'"
+    [requestStatusMessage]="topicNames.CURTAIN_STATUS_TOPIC"
+    [topicWhenClick]="topicNames.REQUEST_TOPIC"
+    [subject]="broker.subjects.curtainStatus"
+    #curtain_button
   ></app-open-close-button>
 </div>
 
@@ -25,24 +26,63 @@
     <div class="chart-parent">
       <app-status-chart
         style="grid-column: 1; grid-row: 1"
-        [measurementConfig]="TEMPERATURE_CONFIG"
+        [measurementConfig]="config.TEMPERATURE_CONFIG"
         [subject]="broker.subjects.temperature"
       ></app-status-chart>
       <app-status-chart
         style="grid-column: 2; grid-row: 1"
-        [measurementConfig]="LIGHT_CONFIG"
+        [measurementConfig]="config.LIGHT_CONFIG"
         [subject]="broker.subjects.light"
       ></app-status-chart>
       <app-status-chart
         style="grid-column: 3; grid-row: 1"
-        [measurementConfig]="HUMIDITY_CONFIG"
+        [measurementConfig]="config.HUMIDITY_CONFIG"
         [subject]="broker.subjects.humidity"
       ></app-status-chart>
+      <div class="setting-button-parent" style="grid-column: 1; grid-row: 2">
+        <div class="setting-text">
+          Automatically turn off when temperature is higher than 35°C
+        </div>
+        <app-open-close-button
+          [requestStatusMessage]="topicNames.SETTING_TEMPERATURE_STATUS_TOPIC"
+          [topicWhenClick]="topicNames.SETTINGS_TEMPERATURE_TOPIC"
+          [subject]="broker.subjects.temperatureSettingStatus"
+        ></app-open-close-button>
+      </div>
+      <div class="setting-button-parent" style="grid-column: 2; grid-row: 2">
+        <div class="setting-text">
+          Automatically turn off when light is higher than 60%
+        </div>
+        <app-open-close-button
+          [requestStatusMessage]="topicNames.SETTING_LIGHT_STATUS_TOPIC"
+          [topicWhenClick]="topicNames.SETTINGS_LIGHT_TOPIC"
+          [subject]="broker.subjects.lightSettingStatus"
+        ></app-open-close-button>
+      </div>
+      <div class="setting-button-parent" style="grid-column: 3; grid-row: 2">
+        <div class="setting-text">
+          Automatically turn off when humidity is higher than 70% RH
+        </div>
+        <app-open-close-button
+          [requestStatusMessage]="topicNames.SETTING_HUMIDITY_STATUS_TOPIC"
+          [topicWhenClick]="topicNames.SETTINGS_HUMIDITY_TOPIC"
+          [subject]="broker.subjects.humiditySettingStatus"
+        ></app-open-close-button>
+      </div>
     </div>
   </mat-tab>
   <mat-tab label="Graphs" color="black">
-    <app-status-graph [measurementConfig]="LIGHT_CONFIG" [subject]="broker.subjects.light"></app-status-graph>
-    <app-status-graph [measurementConfig]="TEMPERATURE_CONFIG" [subject]="broker.subjects.temperature"></app-status-graph>
-    <app-status-graph [measurementConfig]="HUMIDITY_CONFIG" [subject]="broker.subjects.humidity"></app-status-graph>
+    <app-status-graph
+      [measurementConfig]="config.LIGHT_CONFIG"
+      [subject]="broker.subjects.light"
+    ></app-status-graph>
+    <app-status-graph
+      [measurementConfig]="config.TEMPERATURE_CONFIG"
+      [subject]="broker.subjects.temperature"
+    ></app-status-graph>
+    <app-status-graph
+      [measurementConfig]="config.HUMIDITY_CONFIG"
+      [subject]="broker.subjects.humidity"
+    ></app-status-graph>
   </mat-tab>
 </mat-tab-group>

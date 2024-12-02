@@ -19,7 +19,8 @@ export class VoiceRecognitionService {
     'smitten',
     'certain',
     'sumatra',
-    'smirting'
+    'smirting',
+    'turn'
   ];
 
   isSmurtainOn(smurtainWord: string) {
@@ -32,8 +33,6 @@ export class VoiceRecognitionService {
 
   constructor(@Inject(PLATFORM_ID) platformId: Object) {
     if (isPlatformBrowser(platformId)) {
-      console.log("constuct")
-      // console.log(window.webkitSpeechRecognition)
       if (
         window.SpeechRecognition == undefined &&
         window.webkitSpeechRecognition == undefined

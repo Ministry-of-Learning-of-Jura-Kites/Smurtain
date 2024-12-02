@@ -4,72 +4,67 @@ import { CURTAIN_STATUS_TOPIC, REQUEST_TOPIC } from '@src/shared/topicNames';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule, NgClass, NgIf } from '@angular/common';
 import { Subject } from 'rxjs';
+import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-open-close-button',
   standalone: true,
-  imports: [MatProgressSpinnerModule, NgClass, NgIf],
+  imports: [MatProgressSpinnerModule, NgClass, NgIf,FormsModule],
   templateUrl: './open-close-button.component.html',
   styleUrl: './open-close-button.component.css',
 })
 export class OpenCloseButtonComponent implements OnInit {
   // only subject of boolean
-  @Input() brokerServiceKey:
-    | {
-        [K in keyof BrokerService['subjects']]: BrokerService['subjects'][K] extends Subject<boolean>
-          ? K
-          : never;
-      }[keyof BrokerService['subjects']]
-    | undefined;
-  @Input() onClickTopic: string | undefined;
-  @Input() requestMessage: string | undefined;
+  @Input({ required: true }) subject!: Subject<boolean>;
+  @Input({ required: true }) topicWhenClick!: string;
+  @Input({ required: true }) requestStatusMessage!: string;
   isChecked = false;
   isLoading = true;
 
   constructor(public brokerService: BrokerService) {
-    // this.brokerService.client?.publish(REQUEST_TOPIC, 'curtain_status');
-    this.isLoading = true;
   }
 
   ngOnInit(): void {
-    // this.onInit();
-    this.brokerService.subjects[this.brokerServiceKey!]!.subscribe(
+    this.subject.subscribe(
       (newValue: boolean) => {
         this.isLoading = false;
         this.isChecked = newValue;
       }
     );
-    this.brokerService.client?.publish(REQUEST_TOPIC, this.requestMessage!);
+    this.brokerService.client?.publish(REQUEST_TOPIC, this.requestStatusMessage!);
   }
 
-  click() {
+  onclick() {
     if (this.isLoading) {
+      this.isChecked = false;
       return;
     }
     this.isChecked = !this.isChecked;
-    if (this.isChecked) {
+    if (!this.isChecked) {
       this.clickToOn();
     } else {
       this.clickToOff();
     }
+    // let message = this.isCheckedToMessage()
+    // this.brokerService.client?.publish(REQUEST_TOPIC, message);
     this.isLoading = true;
   }
 
   clickToOn() {
-    if (this.isLoading || !this.isChecked) {
+    if (this.isLoading || this.isChecked) {
       return;
     }
     this.isChecked = true;
-    this.brokerService.client?.publish(REQUEST_TOPIC, 'on');
+    this.brokerService.client?.publish(this.topicWhenClick, 'on');
     this.isLoading = true;
   }
 
   clickToOff() {
-    if (this.isLoading || this.isChecked) {
+    if (this.isLoading || !this.isChecked) {
       return;
     }
     this.isChecked = false;
-    this.brokerService.client?.publish(REQUEST_TOPIC, 'off');
+    this.brokerService.client?.publish(this.topicWhenClick, 'off');
     this.isLoading = true;
   }
 }

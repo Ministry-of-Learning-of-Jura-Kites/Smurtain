@@ -42,11 +42,11 @@ input[type="checkbox"] {
   text-align: center;
 }
 
-input[type="checkbox"]:checked ~ .toggle-button-switch {
+input[type="checkbox"][ng-reflect-model="true"] ~ .toggle-button-switch {
   left: 52px;
 }
 
-input[type="checkbox"]:checked ~ .toggle-button-text {
+input[type="checkbox"][ng-reflect-model="true"] ~ .toggle-button-text {
   background-color: #3dbf87;
 }
 
@@ -75,5 +75,5 @@ mat-spinner {
   .toggle-button-text {
     background-color: #9b1d3d !important;
   } */
-  filter: brightness(0.60);
+  filter: brightness(0.6);
 }

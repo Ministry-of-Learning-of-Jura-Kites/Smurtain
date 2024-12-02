@@ -9,14 +9,11 @@ import { AlertComponent } from '@coreui/angular';
 import { NgIf } from '@angular/common';
 import { cilCheck, cilWarning } from '@coreui/icons';
 import { IconDirective } from '@coreui/icons-angular';
-import { REQUEST_TOPIC } from '@src/shared/topicNames';
+import * as topicNames from '@src/shared/topicNames';
 import { StatusChartComponent } from '@src/component/status-chart/status-chart.component';
-import {
-  HUMIDITY_CONFIG,
-  LIGHT_CONFIG,
-  TEMPERATURE_CONFIG,
-} from '@src/shared/config';
+import * as config from '@src/shared/config';
 import { StatusGraphComponent } from '../component/status-graph/status-graph.component';
+import { FormsModule } from '@angular/forms';
 @Component({
   encapsulation: ViewEncapsulation.None,
   selector: 'app-root',
@@ -30,50 +27,17 @@ import { StatusGraphComponent } from '../component/status-graph/status-graph.com
     NgIf,
     StatusChartComponent,
     StatusGraphComponent,
+    FormsModule,
   ],
   providers: [HttpClientModule],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css', 'app.component.scss'],
 })
 export class AppComponent {
-  @ViewChild(OpenCloseButtonComponent)
+  @ViewChild('curtain_button')
   openCloseButtonComponent!: OpenCloseButtonComponent;
-  REQUEST_TOPIC = REQUEST_TOPIC;
-  LIGHT_CONFIG = LIGHT_CONFIG;
-  TEMPERATURE_CONFIG = TEMPERATURE_CONFIG;
-  HUMIDITY_CONFIG = HUMIDITY_CONFIG;
-
-  onCurtainButtonInit(this: OpenCloseButtonComponent) {
-    this.brokerService.subjects.curtainStatus.subscribe((newValue) => {
-      this.isLoading = false;
-      this.isChecked = newValue;
-    });
-    this.brokerService.client?.publish(REQUEST_TOPIC, 'curtain_status');
-  }
-
-  onCurtainButtonOn(this: OpenCloseButtonComponent) {
-    this.brokerService.client?.publish(REQUEST_TOPIC, 'on');
-  }
-
-  onCurtainButtonOff(this: OpenCloseButtonComponent) {
-    this.brokerService.client?.publish(REQUEST_TOPIC, 'off');
-  }
-
-  // onAutoLightButtonInit(this: OpenCloseButtonComponent) {
-  //   this.brokerService.subjects.settingLight.subscribe((newValue) => {
-  //     this.isLoading = false;
-  //     this.isChecked = newValue;
-  //   });
-  //   this.brokerService.client?.publish(REQUEST_TOPIC, 'status/setting_light');
-  // }
-
-  // onAutoLightButtonOn(this: OpenCloseButtonComponent) {
-  //   this.brokerService.client?.publish(REQUEST_TOPIC, 'on');
-  // }
-
-  // onAutoLightButtonOff(this: OpenCloseButtonComponent) {
-  //   this.brokerService.client?.publish(REQUEST_TOPIC, 'off');
-  // }
+  topicNames = topicNames;
+  config = config;
 
   icons = { cilWarning };
   title = 'smurtain';

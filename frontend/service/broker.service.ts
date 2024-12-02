@@ -6,6 +6,9 @@ import {
   CURTAIN_STATUS_TOPIC,
   HUMIDITY_TOPIC,
   LIGHT_TOPIC,
+  SETTING_HUMIDITY_STATUS_TOPIC,
+  SETTING_LIGHT_STATUS_TOPIC,
+  SETTING_TEMPERATURE_STATUS_TOPIC,
   TEMPERATURE_TOPIC,
 } from '@src/shared/topicNames';
 
@@ -26,15 +29,15 @@ export const MQTT_OPTIONS: mqtt.IClientOptions = {
 export class BrokerService {
   public client: mqtt.MqttClient | undefined;
 
-  public subjects  = {
+  public subjects = {
     temperature: new Subject<number>(),
     light: new Subject<number>(),
     humidity: new Subject<number>(),
-    curtainStatus: new Subject<boolean>()
-  }
-
-  // public booleanSubjects : Subject<boolean> = {
-  // }
+    curtainStatus: new Subject<boolean>(),
+    temperatureSettingStatus: new Subject<boolean>(),
+    lightSettingStatus: new Subject<boolean>(),
+    humiditySettingStatus: new Subject<boolean>(),
+  };
 
   constructor(@Inject(PLATFORM_ID) private platformId: InjectionToken<Object>) {
     if (isPlatformBrowser(platformId)) {
@@ -45,6 +48,9 @@ export class BrokerService {
         this.subscribeToTopic(LIGHT_TOPIC);
         this.subscribeToTopic(HUMIDITY_TOPIC);
         this.subscribeToTopic(CURTAIN_STATUS_TOPIC);
+        this.subscribeToTopic(SETTING_HUMIDITY_STATUS_TOPIC);
+        this.subscribeToTopic(SETTING_LIGHT_STATUS_TOPIC);
+        this.subscribeToTopic(SETTING_TEMPERATURE_STATUS_TOPIC);
       });
 
       this.client.on('message', (topic, message) => {
@@ -62,11 +68,20 @@ export class BrokerService {
           case CURTAIN_STATUS_TOPIC:
             this.subjects.curtainStatus.next(messageString == 'on');
             break;
+          case SETTING_HUMIDITY_STATUS_TOPIC:
+            this.subjects.humiditySettingStatus.next(messageString == 'on');
+            break;
+          case SETTING_TEMPERATURE_STATUS_TOPIC:
+            this.subjects.temperatureSettingStatus.next(messageString == 'on');
+            break;
+          case SETTING_LIGHT_STATUS_TOPIC:
+            this.subjects.lightSettingStatus.next(messageString == 'on');
+            break;
         }
       });
     }
   }
-  
+
   private subscribeToTopic(topic: string): void {
     this.client?.subscribe(topic, (err) => {
       if (err) {

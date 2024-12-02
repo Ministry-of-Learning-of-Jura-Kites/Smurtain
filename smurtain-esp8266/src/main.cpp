@@ -43,6 +43,8 @@ void sendBooleanValue(String topic);
 
 void sendFloatValue(String topic);
 
+void setupMqtt();
+
 void setup()
 {
   Serial.begin(115200);
@@ -53,7 +55,7 @@ void setup()
   Serial.println("Serial connected");
 
   sensorSerial.begin(9600, EspSoftwareSerial::Config::SWSERIAL_8O1, RX_PIN, TX_PIN);
-
+  
   while (!sensorSerial)
     ;
 
@@ -69,38 +71,15 @@ void setup()
 
   Serial.println("\nWifi connected.");
 
-  while (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
-  {
-    Serial.print("MQTT connection failed! Error code = ");
-
-    Serial.println(mqttClient.connectError());
-
-    delay(5000);
-  }
+  setupMqtt();
 
   Serial.println("MQTT broker is connected.");
-
-  mqttClient.onMessage(onMqttMessage);
-
-  mqttClient.subscribe(REQUEST_TOPIC);
-
-  mqttClient.subscribe(SETTINGS_LIGHT_TOPIC);
-  mqttClient.subscribe(SETTINGS_HUMIDITY_TOPIC);
-  mqttClient.subscribe(SETTINGS_TEMPERATURE_TOPIC);
 }
 
 void loop()
 {
   if (!mqttClient.connected())
   {
-    while (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
-    {
-      Serial.print("MQTT connection failed! Error code = ");
-
-      Serial.println(mqttClient.connectError());
-
-      delay(5000);
-    }
   }
   if (has_encountered_error)
   {
@@ -114,11 +93,35 @@ void loop()
   }
 }
 
+void setupMqtt()
+{
+  while (!mqttClient.connect(BROKER_HOST, BROKER_PORT))
+  {
+    Serial.print("MQTT connection failed! Error code = ");
+
+    Serial.println(mqttClient.connectError());
+
+    delay(5000);
+  }
+
+  mqttClient.onMessage(onMqttMessage);
+
+  mqttClient.subscribe(REQUEST_TOPIC);
+  mqttClient.subscribe(SETTINGS_LIGHT_TOPIC);
+  mqttClient.subscribe(SETTINGS_HUMIDITY_TOPIC);
+  mqttClient.subscribe(SETTINGS_TEMPERATURE_TOPIC);
+}
+
 void handleSensorMessage()
 {
-  sensorSerial.readBytesUntil(FRAME_SEPERATOR, buffer, 6);
+  size_t size = sensorSerial.readBytesUntil(FRAME_SEPERATOR, buffer, 6);
   int requestTypeInt = (int)buffer[0];
-  Serial.println("received message from sensor: "+String(requestTypeInt));
+  Serial.print("received message from sensor: ");
+  for(size_t i=0;i<size;i++){
+    Serial.print(buffer[i]);
+    Serial.print(" ");
+  }
+  Serial.println();
   RequestType requestType = intToRequestType(requestTypeInt);
   if (requestType == RequestType::None)
   {
@@ -227,9 +230,8 @@ void onMqttMessage(int messageSize)
     {
       Serial.print("received from MQTT: ");
       Serial.println(static_cast<uint8_t>(requestType));
-      sensorSerial.write(static_cast<uint8_t>(requestType));
-      sensorSerial.write(FRAME_SEPERATOR);
-      sensorSerial.flush();
+      uint8_t  buf[2]={static_cast<uint8_t>(requestType),FRAME_SEPERATOR};
+      sensorSerial.write(buf,2);
     }
   }
 
@@ -266,6 +268,5 @@ void onMqttMessage(int messageSize)
     sensorSerial.write(static_cast<uint8_t>(requestType));
     sensorSerial.write(value);
     sensorSerial.write(FRAME_SEPERATOR);
-    sensorSerial.flush();
   }
 }
